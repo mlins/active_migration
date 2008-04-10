@@ -7,6 +7,9 @@ config/hoe.rb
 config/requirements.rb
 lib/active_migration.rb
 lib/active_migration/version.rb
+lib/active_migration/base.rb
+lib/active_migration/callbacks.rb
+lib/active_migration/key_mapper.rb
 log/debug.log
 script/console
 script/destroy

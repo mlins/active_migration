@@ -25,11 +25,11 @@ module ActiveMigration
     def run_with_key_mapping
       load_maps if self.class.maps_to_load
       run_without_key_mapping
-      write_key_map(DATA_PATH, self.class.legacy_model_name.demodulize.tableize) if self.class.map_primary_key
+      write_key_map(KEYMAPPER_PATH || '/tmp', self.class.legacy_model.to_s.demodulize.tableize) if self.class.map_primary_key
     end
     
     def migrate_field_with_key_mapping(active_record, legacy_record, mapping)
-        eval("legacy_record.#{mapping[:legacy_field]} = mapped_key[mapping[:map]][legacy_record.#{mapping[:legacy_field]}]") if mapping[:map]
+        eval("legacy_record.#{mapping[0]} = mapped_key[mapping[:map]][legacy_record.#{mapping[0]}]") if mapping[2] == :map
         migrate_field_without_key_mapping(active_record, legacy_record, mapping)
     end
     
@@ -43,8 +43,8 @@ module ActiveMigration
       @key_mappings[legacy_id] = active_id
     end
 
-    def write_key_map(data_path, legacy_model_name)
-      File.open(File.join(data_path, (legacy_model_name.demodulize.downcase.pluralize + "_map.yml")), 'w') do |file|
+    def write_key_map(data_path, filename)
+      File.open(File.join(data_path, (filename + "_map.yml")), 'w') do |file|
           file.write @key_mappings.to_yaml
       end
     end
@@ -52,7 +52,7 @@ module ActiveMigration
     def load_maps
       @maps ||= Hash.new
       self.class.maps_to_load.each do |map|
-        @maps[map] = YAML::load(File.open(File.join(DATA_PATH, map + "_map.yml"))) 
+        @maps[map] = YAML::load(File.open(File.join(KEYMAPPER_PATH || '/tmp', map + "_map.yml")))
       end
     end
     

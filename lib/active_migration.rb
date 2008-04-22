@@ -16,8 +16,10 @@ end
 require 'active_migration/base'
 require 'active_migration/key_mapper'
 require 'active_migration/callbacks'
+require 'active_migration/dependencies'
 
 ActiveMigration::Base.class_eval do
   include ActiveMigration::KeyMapper
+  include ActiveMigration::Dependencies
   include ActiveMigration::Callbacks
 end

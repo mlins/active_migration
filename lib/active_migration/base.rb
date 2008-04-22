@@ -21,6 +21,12 @@
 module ActiveMigration
   class Base
     
+    class ActiveMigrationError < StandardError
+    end
+
+    class ReferenceFieldNotSpecified < ActiveMigrationError
+    end
+
     class << self
       
       attr_accessor :legacy_model, :active_model, :mappings, :legacy_find_options, :reference_field, :max_rows
@@ -76,6 +82,7 @@ module ActiveMigration
     end
     
     def run
+      raise ReferenceFieldNotSpecified if self.class.reference_field.nil?
       num_of_records = self.class.legacy_model.count
       if num_of_records > self.class.max_rows and not (not self.class.legacy_find_options.nil? and self.class.legacy_find_options.has_key?('limit') and self.class.legacy_find_options.has_key?('offset')) 
         run_in_batches num_of_records
@@ -117,7 +124,7 @@ module ActiveMigration
         eval("active_record.#{mapping[1]} = legacy_record.#{mapping[0]}")
       rescue
         error = "could not be retrieved as #{mapping[0]} from the legacy database -- probably doesn't exist."
-        eval("active_record.#{mapping[1]} = handle_error(active_record, self.class.reference_field, mapping[:active_field], error)")
+        eval("active_record.#{mapping[1]} = handle_error(active_record, self.class.reference_field, mapping[1], error)")
       end
     end
     

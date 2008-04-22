@@ -10,6 +10,7 @@ lib/active_migration/version.rb
 lib/active_migration/base.rb
 lib/active_migration/callbacks.rb
 lib/active_migration/key_mapper.rb
+lib/active_migration/dependencies.rb
 script/console
 script/destroy
 script/generate

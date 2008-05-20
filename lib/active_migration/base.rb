@@ -20,16 +20,13 @@
 #
 module ActiveMigration
   class Base
-    
+
     class ActiveMigrationError < StandardError
     end
 
-    class ReferenceFieldNotSpecified < ActiveMigrationError
-    end
-
     class << self
-      
-      attr_accessor :legacy_model, :active_model, :mappings, :legacy_find_options, :reference_field, :max_rows
+
+      attr_accessor :legacy_model, :active_model, :mappings, :legacy_find_options, :reference_field, :max_rows, :active_record_update
 
       # This sets the maximum number of rows to pull from the database at once.  If you have a lot of records and tables
       # that hold a lot of data, you may want to decrease this.  It defaults to 50.
@@ -37,12 +34,20 @@ module ActiveMigration
         @max_rows = max_rows.to_i
       end
       alias max_rows= set_max_rows
-      
+
       def max_rows
         @max_rows ||= 50
         @max_rows
       end
-      
+
+      # Sets the active model to search for an existing record
+      # based on the PK of the legacy record.
+      #
+      def set_active_record_update(active_record_update)
+        @active_record_update = active_record_update
+      end
+      alias active_record_update= set_active_record_update
+
       # Sets the legacy model to be migrated from.
       #
       #   set_legacy_model Legacy::Post
@@ -50,7 +55,7 @@ module ActiveMigration
         @legacy_model = legacy_model
       end
       alias legacy_model= set_legacy_model
-      
+
       # Sets the active model to be migrated to.
       #
       #   set_active_model Post
@@ -58,42 +63,47 @@ module ActiveMigration
         @active_model = active_model
       end
       alias active_model= set_active_model
-      
+
       def set_mappings(mappings)
         @mappings = mappings
       end
       alias mappings= set_mappings
-      
+
       def set_legacy_find_options(legacy_find_options)
         @legacy_find_options = legacy_find_options
       end
       alias legacy_find_options= legacy_find_options
-      
+
       def legacy_find_options
         @legacy_find_options ||= {}
         @legacy_find_options
       end
-      
+
       def set_reference_field(reference_field)
         @reference_field = reference_field.to_s
       end
       alias reference_field= set_reference_field
-      
+
+      def reference_field
+        @reference_field || :id
+      end
+
     end
-    
+
     def run
-      raise ReferenceFieldNotSpecified if self.class.reference_field.nil?
       num_of_records = self.class.legacy_model.count
-      if num_of_records > self.class.max_rows and not (not self.class.legacy_find_options.nil? and self.class.legacy_find_options.has_key?('limit') and self.class.legacy_find_options.has_key?('offset')) 
+      if num_of_records > self.class.max_rows and (not self.class.legacy_find_options.nil? and
+            not self.class.legacy_find_options.has_key?('limit') and
+            not self.class.legacy_find_options.has_key?('offset'))
         run_in_batches num_of_records
       else
         run_normal
       end
     end
-    
+
     private
-    
-    def run_in_batches num_of_records
+
+    def run_in_batches(num_of_records)
       num_of_last_record = 0
       while num_of_records > 0 do
         self.class.legacy_find_options[:offset] = num_of_last_record
@@ -103,22 +113,22 @@ module ActiveMigration
         run_normal
       end
     end
-    
+
     def run_normal
       legacy_records = self.class.legacy_model.find(:all, self.class.legacy_find_options)
       legacy_records.each do |legacy_record|
-        active_record = self.class.active_model.new
+        active_record = self.class.active_record_update ? self.class.active_model.find(legacy_record.id) : self.class.active_model.new
         migrate_record(active_record, legacy_record)
         save_active_record(active_record, legacy_record)
       end
     end
-    
+
     def migrate_record(active_record, legacy_record)
       self.class.mappings.each do |mapping|
         migrate_field(active_record, legacy_record, mapping)
       end
     end
-    
+
     def migrate_field(active_record, legacy_record, mapping)
       begin
         eval("active_record.#{mapping[1]} = legacy_record.#{mapping[0]}")
@@ -127,7 +137,7 @@ module ActiveMigration
         eval("active_record.#{mapping[1]} = handle_error(active_record, self.class.reference_field, mapping[1], error)")
       end
     end
-    
+
     def save_active_record(active_record, legacy_record)
       if active_record.save
         handle_success(active_record, self.class.reference_field)
@@ -138,11 +148,11 @@ module ActiveMigration
         active_record.save!
       end
     end
-    
+
     def handle_errors(model)
       model.errors.each do |field, msg|
         if model.instance_eval(field).kind_of? ActiveRecord::Base
-          handle_errors(model.instance_eval(field)) 
+          handle_errors(model.instance_eval(field))
           break
         elsif model.instance_eval(field).kind_of? Array
           model.instance_eval(field).each do |f|
@@ -155,12 +165,12 @@ module ActiveMigration
         eval("model.#{field} = new_value.chomp")
       end
     end
-    
+
     def handle_error(model, reference_field, error_field, error_message)
     end
-    
+
     def handle_success(model, reference_field)
     end
-    
+
   end
 end

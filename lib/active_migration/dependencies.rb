@@ -27,16 +27,20 @@ module ActiveMigration
       end
     end
 
-    def run_with_dependencies
-      self.class.dependencies.each do |dependency|
-        migration = dependency.to_s.camelize.constantize
-        unless migration.completed?
-          puts "Running(dependency) #{dependency.to_s}"
-          migration.new.run
-          migration.is_completed
+    def run_with_dependencies(skip_dependencies=false)
+      if skip_dependencies
+        run_without_dependencies
+      else
+        self.class.dependencies.each do |dependency|
+          migration = dependency.to_s.camelize.constantize
+          unless migration.completed?
+            puts "Running(dependency) #{dependency.to_s}"
+            migration.new.run
+            migration.is_completed
+          end
         end
+        run_without_dependencies unless self.class.completed?
       end
-      run_without_dependencies unless self.class.completed?
     end
 
   end

@@ -16,6 +16,8 @@ describe "A migration" do
     Legacy::Product.stub!(:find).and_return([@legacy_model])
   end
 
+  # I don't usually put 2 expectation in the same spec, but the stub for :new
+  # didn't appear to work in the before block.
   it "should instansiate it's dependencies" do
     ProductMigration.should_receive(:new).and_return(@dependency)
     @dependency.should_receive(:run)

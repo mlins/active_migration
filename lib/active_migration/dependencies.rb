@@ -1,5 +1,5 @@
 module ActiveMigration
-  # Dependencies are supported by ActiveRecord in this module.  If you set some dependencies
+  # Dependencies are supported by ActiveMigration in this module.  If you set some dependencies
   # they'll be ran before Base#run is called.  Specifying dependencies is easy:
   #
   #   set_dependencies  [:supplier_migration, :manufacturer_migration]
@@ -38,7 +38,6 @@ module ActiveMigration
         self.class.dependencies.each do |dependency|
           migration = dependency.to_s.camelize.constantize
           unless migration.completed?
-            puts "Running(dependency) #{dependency.to_s}"
             migration.new.run
             migration.is_completed
           end

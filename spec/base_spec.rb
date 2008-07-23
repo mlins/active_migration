@@ -68,8 +68,7 @@ describe "A migration" do
     before do
       @errors = mock('errors_object', :null_object => true)
       @active_model.stub!(:save).and_return(false)
-      @calls = 0
-      @active_model.stub!(:valid?).and_return { @calls+=1;if @calls>1;true;else;false;end  }
+      @active_model.stub!(:valid?).and_return(false, true)
       @active_model.stub!(:errors).and_return(@errors)
       @migration.stub!(:handle_error).and_return("new_value")
     end

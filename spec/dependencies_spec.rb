@@ -26,7 +26,7 @@ describe "A migration" do
 
   it "should run it's dependencies" do
     @dependent_record.should_receive(:run).and_return(nil)
-    ProductTwoMigration.new.rungit
+    ProductTwoMigration.new.run
   end
 
 end

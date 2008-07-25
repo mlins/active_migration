@@ -10,6 +10,6 @@ class ProductTwoMigration < ActiveMigration::Base
                         ['name' , 'name']
                         ]
 
-  set_dependencies      [:product_migration]
+  set_dependencies      [:manufacturer_migration]
 
 end

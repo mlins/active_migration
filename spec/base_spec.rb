@@ -1,75 +1,108 @@
 require File.dirname(__FILE__) + '/spec_helper.rb'
 
-#require 'rubygems'; require 'ruby-debug'
+require File.dirname(__FILE__) + '/fixtures/product_one_migration'
+require File.dirname(__FILE__) + '/fixtures/product_five_migration'
+require File.dirname(__FILE__) + '/fixtures/product_six_migration'
 
-describe "A migration" do
+describe 'A migration' do
 
   before do
-    @migration = ProductMigration.new
-    @legacy_model = mock("ar_object1", :null_object => true)
-    @active_model = mock("ar_object2", :null_object => true)
-    @legacy_model.stub!(:name).and_return("Beer")
-    @active_model.stub!(:name=).and_return("Beer")
-    Product.stub!(:new).and_return(@active_model)
+    @legacy_record = mock('legacy_model', :id => 1, :name => 'Beer')
+    @active_record = mock('active_model', :name= => 'Beer', :save => true)
+    Product.stub!(:new).and_return(@active_record)
     Legacy::Product.stub!(:count).and_return(1)
-    Legacy::Product.stub!(:find).and_return([@legacy_model])
-  end
-
-  it "should not run in batches" do
-    @migration.should_not_receive(:run_in_batches)
-    @migration.run
-  end
-
-  it "should run normal" do
-    @migration.should_receive(:run_normal)
-    @migration.run
-  end
-
-  it "should create a new active model" do
-    Product.should_receive(:new).and_return(@active_model)
-    @migration.run
+    Legacy::Product.stub!(:find).and_return([@legacy_record])
   end
 
   it "should find the legacy records" do
-    Legacy::Product.should_receive(:find).and_return(@legacy_model)
-    @migration.run
+    Legacy::Product.should_receive(:find).and_return([@legacy_record])
+    ProductOneMigration.new.run
+  end
+
+  it "should create a new active record" do
+    Product.should_receive(:new).and_return(@active_record)
+    ProductOneMigration.new.run
   end
 
   it "should get the legacy name value" do
-    @legacy_model.should_receive(:name).and_return("Beer")
+    @legacy_record.should_receive(:name).and_return("Beer")
+    ProductOneMigration.new.run
+  end
+
+  it "should set the active name value to the legacy value" do
+    @active_record.should_receive(:name=).with("Beer").and_return("Beer")
+    ProductOneMigration.new.run
+  end
+
+  it "should attempt to save the active record" do
+    @active_record.should_receive(:save).and_return(true)
+    ProductOneMigration.new.run
+  end
+
+  it "should call #handle_success" do
+    @migration = ProductOneMigration.new
+    @migration.should_receive(:handle_success).with(@active_record, "name")
     @migration.run
   end
 
-  it "should set the active name value to the legcy value" do
-    @active_model.should_receive(:name=).with("Beer").and_return("Beer")
-    @migration.run
+  describe "with specified find parameters" do
+
+    it "should find the legacy records with the specified parameters" do
+      Legacy::Product.should_receive(:find).with(:all, {:conditions => {:name => "Matt"}}).and_return([@legacy_record])
+      ProductFiveMigration.new.run
+    end
+
   end
 
-  describe "without validation errors" do
+  describe "with the update flag set for the active model" do
 
     before do
-      @active_model.stub!(:save).and_return(true)
+      Product.stub!(:find).and_return(@active_record)
     end
 
-    it "should attempt to save the active model" do
-      @active_model.should_receive(:save).and_return(true)
-      @migration.run
+    it "should call find on the active model" do
+      Product.should_receive(:find).with(1).and_return(@active_record)
+      ProductSixMigration.new.run
     end
 
-    it "should call #handle_success" do
-      @migration.should_receive(:handle_success).with(@active_model, "name")
-      @migration.run
+    it "should not create a new active record" do
+      Product.should_not_receive(:new)
+      ProductSixMigration.new.run
     end
 
   end
 
-  describe "with validation errors" do
+  describe "with more legacy records(10) than the specified max_rows(5)" do
+
+    before do
+      @legacy_recordset = []
+      10.times {@legacy_recordset.push(@legacy_record)}
+      Legacy::Product.stub!(:count).and_return(10)
+      Legacy::Product.stub!(:find).and_return(@legacy_recordset)
+    end
+
+    it "should call find with a limit of max_rows(5) and an offset of 0 once" do
+      Legacy::Product.should_receive(:find).with(:all, {:limit => 5, :offset => 0}).once.and_return(@legacy_recordset)
+      ProductOneMigration.new.run
+    end
+
+    it "should call find with a limit of max_rows(5) and an offset of 5 once" do
+      Legacy::Product.should_receive(:find).with(:all, {:limit => 5, :offset => 5}).once.and_return(@legacy_recordset)
+      ProductOneMigration.new.run
+    end
+
+  end
+
+  describe "with invalid data in the active record" do
 
     before do
       @errors = mock('errors_object', :null_object => true)
-      @active_model.stub!(:save).and_return(false)
-      @active_model.stub!(:valid?).and_return(false, true)
-      @active_model.stub!(:errors).and_return(@errors)
+      @active_record.stub!(:name).and_return('Beer')
+      @active_record.stub!(:save).and_return(false)
+      @active_record.stub!(:save!).and_return(true)
+      @active_record.stub!(:valid?).and_return(false, true)
+      @active_record.stub!(:errors).and_return(@errors)
+      @migration = ProductOneMigration.new
       @migration.stub!(:handle_error).and_return("new_value")
     end
 
@@ -79,13 +112,18 @@ describe "A migration" do
         @errors.stub!(:each).and_yield "name", "has an error"
       end
 
-      it "should attempt to save the active model" do
-        @active_model.should_receive(:save).and_return(false)
+      it "should attempt to save the active record" do
+        @active_record.should_receive(:save).and_return(false)
         @migration.run
       end
 
       it "should call #handle_error" do
-        @migration.should_receive(:handle_error).with(@active_model, "name", "name", "has an error").and_return("new_value")
+        @migration.should_receive(:handle_error).with(@active_record, "name", "name", "has an error").and_return("new_value")
+        @migration.run
+      end
+
+      it "should attempt to save the active record again" do
+        @active_record.should_receive(:save!).and_return(true)
         @migration.run
       end
 
@@ -95,18 +133,22 @@ describe "A migration" do
 
       before do
         @errors.stub!(:each).and_yield "name", "is invalid"
-        @associated_model = mock("ar_object3", :null_object => true)
-        @associated_model.stub!(:errors).and_return(@errors)
-        @active_model.stub!(:name).and_return([@associated_model, @associated_model])
+        @associated_record = mock("asssociated_model", :errors => @errors, :name => "Miller", :name= => "Miller")
+        @active_record.stub!(:name).and_return([@associated_record, @associated_record])
       end
 
       it "should attempt to save the active model" do
-        @active_model.should_receive(:save).and_return(false)
+        @active_record.should_receive(:save).and_return(false)
         @migration.run
       end
 
       it "should call #handle_error" do
-        @migration.should_receive(:handle_error).exactly(2).with(@associated_model, "name", "name", "is invalid").and_return("new_value")
+        @migration.should_receive(:handle_error).exactly(2).with(@associated_record, "name", "name", "is invalid").and_return("new_value")
+        @migration.run
+      end
+
+      it "should attempt to save the active record again" do
+        @active_record.should_receive(:save!).and_return(true)
         @migration.run
       end
 
@@ -116,20 +158,22 @@ describe "A migration" do
 
       before do
         @errors.stub!(:each).and_yield "name", "is invalid"
-        @associated_model = mock("ar_object4", :null_object => true)
-        @associated_model.stub!(:errors).and_return(@errors)
-        @associated_model.stub!(:kind_of?).and_return(ActiveRecord::Base)
-        @associated_model.stub!(:name).and_return("Beer")
-        @active_model.stub!(:name).and_return(@associated_model)
+        @associated_record = mock("asssociated_model", :kind_of? => ActiveRecord::Base,:errors => @errors, :name => "Miller", :name= => "Miller")
+        @active_record.stub!(:name).and_return(@associated_record)
       end
 
       it "should attempt to save the active model" do
-        @active_model.should_receive(:save).and_return(false)
+        @active_record.should_receive(:save).and_return(false)
         @migration.run
       end
 
       it "should call #handle_error" do
-        @migration.should_receive(:handle_error).with(@associated_model, "name", "name", "is invalid").and_return("new_value")
+        @migration.should_receive(:handle_error).with(@associated_record, "name", "name", "is invalid").and_return("new_value")
+        @migration.run
+      end
+
+      it "should attempt to save the active record again" do
+        @active_record.should_receive(:save!).and_return(true)
         @migration.run
       end
 

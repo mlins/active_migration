@@ -7,11 +7,11 @@ module ActiveMigration
   #   set_map_primary_key true
   #
   # To deserialize the keys and map them you first need to load the maps, using the plural form of your migration.
-  # If you had a ProductMigration, then you would load :products :
+  # If you had a Product, then you would load :products :
   #
   #   set_use_maps  :products,
   #
-  # To map the key for a foreign key you could:
+  # To deserialize the key for a foreign key you can:
   #
   #   set_mappings  [
   #                 ['product_id',  'product_id',   :map]
@@ -22,6 +22,13 @@ module ActiveMigration
   #   mapped_key(:products, old_key)
   #
   module KeyMapper
+
+    # The path to store the serialized(YAML) keys.
+    #
+    # Defaults to '/tmp'
+    #
+    mattr_accessor :storage_path
+    self.storage_path = '/tmp'
 
     def self.included(base)
       base.class_eval do
@@ -57,7 +64,7 @@ module ActiveMigration
     def run_with_key_mapping #:nodoc:
       load_maps if self.class.maps_to_load
       run_without_key_mapping
-      write_key_map(KEYMAPPER_PATH || '/tmp', self.class.legacy_model.to_s.demodulize.tableize) if self.class.map_primary_key
+      write_key_map(self.storage_path, self.class.legacy_model.to_s.demodulize.tableize) if self.class.map_primary_key
     end
 
     def migrate_field_with_key_mapping(active_record, legacy_record, mapping) #:nodoc:
@@ -84,11 +91,15 @@ module ActiveMigration
     def load_maps #:nodoc:
       @maps ||= Hash.new
       self.class.maps_to_load.each do |map|
-        @maps[map] = YAML::load(File.open(File.join(KEYMAPPER_PATH || '/tmp', map + "_map.yml")))
+        @maps[map] = YAML.load(File.open(File.join(self.storage_path, map + "_map.yml")))
       end
     end
 
-    def mapped_key(map, key) #:nodoc:
+    # Returns the deserialized mapped key when provided with the former key.
+    #
+    #  mapped_key(:products, 2)
+    #
+    def mapped_key(map, key)
       @maps[map.to_s][key]
     end
 

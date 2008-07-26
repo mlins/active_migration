@@ -55,13 +55,21 @@ module ActiveMigration
         @max_rows
       end
 
-      # Sets the legacy model to be migrated from.  If you use GodWit it'll probably be
-      # namespaced with Legacy (to avoid collisions).
+      # Sets the legacy model to be migrated from.  It's wise to namespace your legacy
+      # models to prevent class duplicates.
+      #
+      # Also, *args can be passed a Hash to hold finder options for legacy record lookup.
       #
       #   set_legacy_model Legacy::Post
       #
-      def set_legacy_model(legacy_model)
+      #   set_legacy_model Legacy::Post,
+      #                    :conditions => 'some_field = value',
+      #                    :order => 'this_field ASC'
+      #
+      def set_legacy_model(legacy_model, *args)
         @legacy_model = eval(legacy_model)
+        @legacy_find_options = args[0] unless args.empty?
+        @legacy_find_options ||= {}
       end
       alias legacy_model= set_legacy_model
 
@@ -95,24 +103,6 @@ module ActiveMigration
         @mappings = mappings
       end
       alias mappings= set_mappings
-
-      # Sets your legacy find options.  This takes a hash that is compatiable with ActiveRecord#find.
-      #
-      # Note: If you're using SQL Server, you must specify this field because ActiveMigration uses offset
-      #       by default (which SQL Server doesn't support).
-      #
-      #   set_legacy_find_options :conditions => 'some_field = value',
-      #                           :order => 'this_field ASC'
-      #
-      def set_legacy_find_options(legacy_find_options)
-        @legacy_find_options = legacy_find_options
-      end
-      alias legacy_find_options= legacy_find_options
-
-      def legacy_find_options #:nodoc:
-        @legacy_find_options ||= {}
-        @legacy_find_options
-      end
 
       # Sets a reference field to be passed to the #handle_success and #handle_error methods.  This is used
       # to display more friendly success/error messages on a per record scope.

@@ -48,7 +48,7 @@ describe 'A migration' do
   describe "with specified find parameters" do
 
     it "should find the legacy records with the specified parameters" do
-      Legacy::Product.should_receive(:find).with(:all, {:conditions => {:name => "Matt"}}).and_return([@legacy_record])
+      Legacy::Product.should_receive(:find).with(:all, {:conditions => ['name = ?', 'matt'], :include => :manufacturer}).and_return([@legacy_record])
       ProductFiveMigration.new.run
     end
 

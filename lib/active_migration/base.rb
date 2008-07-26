@@ -1,6 +1,6 @@
 module ActiveMigration
 
-  # Generic ActiveRecord exception class.
+  # Generic ActiveMigration exception class.
   class ActiveMigrationError < StandardError
   end
 
@@ -36,38 +36,27 @@ module ActiveMigration
   class Base
     class << self
 
-      attr_accessor :legacy_model, :active_model, :mappings, :legacy_find_options, :reference_field, :max_rows, :active_record_mode
-
-      # This sets the maximum number of rows to pull from the database at once.  If you have a lot of fields in your table
-      # that hold a lot of data, you may want to decrease this.  It could take up a lot of memory to pull down 500 records at once.
-      # You may want to increase this to make your migrations more effcient.
-      # It defaults to 500.
-      #
-      #   set_max_rows  100
-      #
-      def set_max_rows(max_rows)
-        @max_rows = max_rows.to_i
-      end
-      alias max_rows= set_max_rows
-
-      def max_rows #:nodoc:
-        @max_rows ||= 500
-        @max_rows
-      end
+      attr_accessor :legacy_model, :active_model, :mappings, :legacy_find_options, :reference_field, :active_record_mode
 
       # Sets the legacy model to be migrated from.  It's wise to namespace your legacy
       # models to prevent class duplicates.
       #
       # Also, *args can be passed a Hash to hold finder options for legacy record lookup.
       #
+      # Note: If you set :limit, it will stagger your selects with offset.  This is intended to break up large datasets
+      #       to conserve memory.  Keep in mind, for this functionality to work :offset(because it is needed internally)
+      #       can never be specified, it will be deleted.
+      #
       #   set_legacy_model Legacy::Post
       #
       #   set_legacy_model Legacy::Post,
       #                    :conditions => 'some_field = value',
-      #                    :order => 'this_field ASC'
+      #                    :order => 'this_field ASC',
+      #                    :limit => 5
       #
       def set_legacy_model(legacy_model, *args)
         @legacy_model = eval(legacy_model)
+        args[0].delete(:offset) if args[0]
         @legacy_find_options = args[0] unless args.empty?
         @legacy_find_options ||= {}
       end
@@ -126,14 +115,14 @@ module ActiveMigration
     #
     def run
       num_of_records = self.class.legacy_model.count
-      if num_of_records > self.class.max_rows and (not self.class.legacy_find_options.nil? and
-        not self.class.legacy_find_options.has_key?('limit') and
-        not self.class.legacy_find_options.has_key?('offset'))
+      if self.class.legacy_find_options[:limit] && (num_of_records > self.class.legacy_find_options[:limit])
         run_in_batches num_of_records
       else
         run_normal
       end
     end
+
+    protected
 
     # This is called everytime there is an error.  You should override this method
     # and handle it in the apporpriate way.
@@ -147,13 +136,14 @@ module ActiveMigration
     def handle_success(model, reference_field)
     end
 
+    private
+
     def run_in_batches(num_of_records) #:nodoc:
       num_of_last_record = 0
       while num_of_records > 0 do
         self.class.legacy_find_options[:offset] = num_of_last_record
-        self.class.legacy_find_options[:limit] = self.class.max_rows
-        num_of_last_record += self.class.max_rows
-        num_of_records -= self.class.max_rows
+        num_of_last_record += self.class.legacy_find_options[:limit]
+        num_of_records -= self.class.legacy_find_options[:limit]
         run_normal
       end
     end

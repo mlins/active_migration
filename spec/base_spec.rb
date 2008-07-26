@@ -45,11 +45,37 @@ describe 'A migration' do
     @migration.run
   end
 
-  describe "with specified find parameters" do
+  describe "with specified find parameters (other than limit and offset)" do
 
     it "should find the legacy records with the specified parameters" do
       Legacy::Product.should_receive(:find).with(:all, {:conditions => ['name = ?', 'matt'], :include => :manufacturer}).and_return([@legacy_record])
       ProductFiveMigration.new.run
+    end
+
+  end
+
+  describe "with specified limit and offset in find parameters" do
+
+    before do
+      @legacy_recordset = []
+      10.times {@legacy_recordset.push(@legacy_record)}
+      Legacy::Product.stub!(:count).and_return(10)
+      Legacy::Product.stub!(:find).and_return(@legacy_recordset)
+    end
+
+    it "should not use the specified offset in the find parameters" do
+      Legacy::Product.should_not_receive(:find).with(:all, {:limit => 5, :offset => 3})
+      ProductOneMigration.new.run
+    end
+
+    it "should call find with a limit of max_rows(5) and an offset of 0 once" do
+      Legacy::Product.should_receive(:find).with(:all, {:limit => 5, :offset => 0}).once.and_return(@legacy_recordset)
+      ProductOneMigration.new.run
+    end
+
+    it "should call find with a limit of max_rows(5) and an offset of 5 once" do
+      Legacy::Product.should_receive(:find).with(:all, {:limit => 5, :offset => 5}).once.and_return(@legacy_recordset)
+      ProductOneMigration.new.run
     end
 
   end
@@ -68,27 +94,6 @@ describe 'A migration' do
     it "should not create a new active record" do
       Product.should_not_receive(:new)
       ProductSixMigration.new.run
-    end
-
-  end
-
-  describe "with more legacy records(10) than the specified max_rows(5)" do
-
-    before do
-      @legacy_recordset = []
-      10.times {@legacy_recordset.push(@legacy_record)}
-      Legacy::Product.stub!(:count).and_return(10)
-      Legacy::Product.stub!(:find).and_return(@legacy_recordset)
-    end
-
-    it "should call find with a limit of max_rows(5) and an offset of 0 once" do
-      Legacy::Product.should_receive(:find).with(:all, {:limit => 5, :offset => 0}).once.and_return(@legacy_recordset)
-      ProductOneMigration.new.run
-    end
-
-    it "should call find with a limit of max_rows(5) and an offset of 5 once" do
-      Legacy::Product.should_receive(:find).with(:all, {:limit => 5, :offset => 5}).once.and_return(@legacy_recordset)
-      ProductOneMigration.new.run
     end
 
   end

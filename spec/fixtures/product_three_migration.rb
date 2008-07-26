@@ -4,8 +4,6 @@ class ProductThreeMigration < ActiveMigration::Base
 
   set_legacy_model      'Legacy::Product'
 
-  set_reference_field   :name
-
   set_mappings          [
                         ['name' , 'name']
                         ]

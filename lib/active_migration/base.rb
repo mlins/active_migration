@@ -8,6 +8,8 @@ module ActiveMigration
   # *Active* dataset.  Legacy being the dataset you will be migrationg from.  Active being the dataset you are migrating to.
   #
   # These terms (legacy and active) are used to refer to:
+  #
+  #   - databases
   #   - models
   #   - records
   #   - fields
@@ -29,14 +31,12 @@ module ActiveMigration
   #                           [:date,             :created_at ]
   #                           ]
   #
-  #     set_reference_field   :title
-  #
   #   end
   #
   class Base
     class << self
 
-      attr_accessor :legacy_model, :active_model, :mappings, :legacy_find_options, :reference_field, :active_record_mode
+      attr_accessor :legacy_model, :active_model, :mappings, :legacy_find_options, :active_record_mode
 
       # Sets the legacy model to be migrated from.  It's wise to namespace your legacy
       # models to prevent class duplicates.
@@ -93,20 +93,6 @@ module ActiveMigration
       end
       alias mappings= set_mappings
 
-      # Sets a reference field to be passed to the #handle_success and #handle_error methods.  This is used
-      # to display more friendly success/error messages on a per record scope.
-      #
-      #   set_reference_field :name
-      #
-      def set_reference_field(reference_field)
-        @reference_field = reference_field.to_s
-      end
-      alias reference_field= set_reference_field
-
-      def reference_field #:nodoc:
-        @reference_field || :id
-      end
-
     end
 
     # Runs the migration.
@@ -127,13 +113,13 @@ module ActiveMigration
     # This is called everytime there is an error.  You should override this method
     # and handle it in the apporpriate way.
     #
-    def handle_error(model, reference_field, error_field, error_message)
+    def handle_error(record, error_field, error_message)
     end
 
     # This is called everytime there is a successful record migration.  You should override this
     # method and handle it in the appropriate way.
     #
-    def handle_success(model, reference_field)
+    def handle_success(record)
     end
 
     private
@@ -163,18 +149,19 @@ module ActiveMigration
       end
     end
 
+    # FIXME - #migrate_field needs to be refactored.
     def migrate_field(active_record, legacy_record, mapping) #:nodoc:
       begin
         eval("active_record.#{mapping[1]} = legacy_record.#{mapping[0]}")
       rescue
         error = "could not be retrieved as #{mapping[0]} from the legacy database -- probably doesn't exist."
-        eval("active_record.#{mapping[1]} = handle_error(active_record, self.class.reference_field, mapping[1], error)")
+        eval("active_record.#{mapping[1]} = handle_error(active_record, mapping[1], error)")
       end
     end
 
     def save_active_record(active_record, legacy_record) #:nodoc:
       if active_record.save
-        handle_success(active_record, self.class.reference_field)
+        handle_success(active_record)
       else
         while !active_record.valid? do
           handle_errors(active_record)
@@ -183,20 +170,20 @@ module ActiveMigration
       end
     end
 
-    def handle_errors(model) #:nodoc:
-      model.errors.each do |field, msg|
-        if model.instance_eval(field).kind_of? ActiveRecord::Base
-          handle_errors(model.instance_eval(field))
+    def handle_errors(record) #:nodoc:
+      record.errors.each do |field, msg|
+        if record.instance_eval(field).kind_of? ActiveRecord::Base
+          handle_errors(record.instance_eval(field))
           break
-        elsif model.instance_eval(field).kind_of? Array
-          model.instance_eval(field).each do |f|
+        elsif record.instance_eval(field).kind_of? Array
+          record.instance_eval(field).each do |f|
             handle_errors(f)
           end
           break
         else
-          new_value = handle_error(model, self.class.reference_field, field, msg)
+          new_value = handle_error(record, field, msg)
         end
-        eval("model.#{field} = new_value.chomp")
+        eval("record.#{field} = new_value.chomp")
       end
     end
 

@@ -6,8 +6,6 @@ class ProductOneMigration < ActiveMigration::Base
                         :limit => 5,
                         :offset => 3 # This is for specing only, this element will be deleted.
 
-  set_reference_field   :name
-
   set_mappings          [
                         ['name' , 'name']
                         ]

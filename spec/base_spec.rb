@@ -41,7 +41,7 @@ describe 'A migration' do
 
   it "should call #handle_success" do
     @migration = ProductOneMigration.new
-    @migration.should_receive(:handle_success).with(@active_record, "name")
+    @migration.should_receive(:handle_success).with(@active_record)
     @migration.run
   end
 
@@ -123,7 +123,7 @@ describe 'A migration' do
       end
 
       it "should call #handle_error" do
-        @migration.should_receive(:handle_error).with(@active_record, "name", "name", "has an error").and_return("new_value")
+        @migration.should_receive(:handle_error).with(@active_record, "name", "has an error").and_return("new_value")
         @migration.run
       end
 
@@ -148,7 +148,7 @@ describe 'A migration' do
       end
 
       it "should call #handle_error" do
-        @migration.should_receive(:handle_error).exactly(2).with(@associated_record, "name", "name", "is invalid").and_return("new_value")
+        @migration.should_receive(:handle_error).exactly(2).with(@associated_record, "name", "is invalid").and_return("new_value")
         @migration.run
       end
 
@@ -173,7 +173,7 @@ describe 'A migration' do
       end
 
       it "should call #handle_error" do
-        @migration.should_receive(:handle_error).with(@associated_record, "name", "name", "is invalid").and_return("new_value")
+        @migration.should_receive(:handle_error).with(@associated_record, "name", "is invalid").and_return("new_value")
         @migration.run
       end
 

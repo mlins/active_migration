@@ -6,8 +6,6 @@ class ProductFiveMigration < ActiveMigration::Base
                             :conditions => ['name = ?', 'matt'],
                             :include => :manufacturer
 
-  set_reference_field       :name
-
   set_mappings              [
                             ['name' , 'name'],
                             ]

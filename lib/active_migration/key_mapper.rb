@@ -68,7 +68,7 @@ module ActiveMigration
     end
 
     def migrate_field_with_key_mapping(active_record, legacy_record, mapping) #:nodoc:
-      eval("legacy_record.#{mapping[0]} = mapped_key[mapping[:map]][legacy_record.#{mapping[0]}]") if mapping[2] == :map
+      eval("legacy_record.#{mapping[0]} = mapped_key(mapping[2], legacy_record.#{mapping[0]})") unless mapping[2].nil?
       migrate_field_without_key_mapping(active_record, legacy_record, mapping)
     end
 

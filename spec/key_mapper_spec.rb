@@ -36,7 +36,7 @@ end
 describe "A migration" do
 
   before do
-    @legacy_record = mock('legacy_model', :id => 1, :supplier_id => 1)
+    @legacy_record = mock('legacy_model', :id => 1, :supplier_id => 1, :supplier_id= => 10)
     @active_record = mock('active_model', :id => 10, :supplier_id= => 10, :save => true)
     Product.stub!(:new).and_return(@active_record)
     Legacy::Product.stub!(:count).and_return(1)
@@ -53,7 +53,12 @@ describe "A migration" do
   end
 
   it "should deserialize the specified maps" do
-    YAML.should_receive(:load).with(@file)
+    YAML.should_receive(:load).with(@file).and_return(@yaml)
+    ProductFourMigration.new.run
+  end
+
+  it "should set the legacy_model to the new key before the field is migrated" do
+    @legacy_record.should_receive(:supplier_id=).with(10).and_return(10)
     ProductFourMigration.new.run
   end
 

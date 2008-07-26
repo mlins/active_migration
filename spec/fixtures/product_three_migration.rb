@@ -1,13 +1,11 @@
 class ProductThreeMigration < ActiveMigration::Base
 
-  set_active_model      'Product'
+  set_active_model    'Product'
 
-  set_legacy_model      'Legacy::Product'
+  set_legacy_model    'Legacy::Product'
 
-  set_mappings          [
-                        ['name' , 'name']
-                        ]
+  map                 [['name', 'name']]
 
-  set_map_primary_key   true
+  set_map_primary_key true
 
 end

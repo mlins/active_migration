@@ -21,15 +21,13 @@ module ActiveMigration
   #
   #   class PostMigration < ActiveMigration::Base
   #
-  #     set_active_model      'Post'
+  #     set_active_model 'Post'
   #
-  #     set_legacy_model      'Legacy::Post'
+  #     set_legacy_model 'Legacy::Post'
   #
-  #     set_mappings          [
-  #                           [:name_tx,          :name       ],
-  #                           [:description_tx,   :description],
-  #                           [:date,             :created_at ]
-  #                           ]
+  #     map              [[:name_tx,        :name],
+  #                       [:description_tx, :description],
+  #                       [:date,           :created_at]]
   #
   #   end
   #
@@ -84,14 +82,12 @@ module ActiveMigration
       # elment contains another array in which the legacy field is the first element and the active field is
       # the second elment.
       #
-      #   set_mappings [
-      #                ['some_old_field',   'new_spiffy_field'],
-      #                ]
+      #   map [['some_old_field', 'new_spiffy_field']]
       #
-      def set_mappings(mappings)
+      def map(mappings)
         @mappings = mappings
       end
-      alias mappings= set_mappings
+      alias mappings= map
 
     end
 

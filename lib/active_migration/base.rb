@@ -67,7 +67,15 @@ module ActiveMigration
 
       # Sets the active model to be migrated to.
       #
-      #   set_active_model Post
+      # Also, an additional parameter for the method of instantiation.  Valid
+      # parameters are: :create or :update.  Defaults to :create.  Use this if records already
+      # exist in the active database.  Lookup with :update will be done via the PK of the legacy
+      # record.
+      #
+      #   set_active_model 'Post'
+      #
+      #   set_active_model 'Post',
+      #                    :update
       #
       def set_active_model(active_model, mode=:create)
         @active_model = eval(active_model)

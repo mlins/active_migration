@@ -36,7 +36,7 @@ module ActiveMigration
   class Base
     class << self
 
-      attr_accessor :legacy_model, :active_model, :mappings, :legacy_find_options, :reference_field, :max_rows, :active_record_update
+      attr_accessor :legacy_model, :active_model, :mappings, :legacy_find_options, :reference_field, :max_rows, :active_record_mode
 
       # This sets the maximum number of rows to pull from the database at once.  If you have a lot of fields in your table
       # that hold a lot of data, you may want to decrease this.  It could take up a lot of memory to pull down 500 records at once.
@@ -55,17 +55,6 @@ module ActiveMigration
         @max_rows
       end
 
-      # Sets the active model to search for an existing record based on the PK of the legacy record.  Sometimes you'll already have
-      # a partial dataset in your active dataset.  This will cause the active model to _update_ the record as opposed to creating
-      # a new record.
-      #
-      #   set_active_record_update  true
-      #
-      def set_active_record_update(active_record_update)
-        @active_record_update = active_record_update
-      end
-      alias active_record_update= set_active_record_update
-
       # Sets the legacy model to be migrated from.  If you use GodWit it'll probably be
       # namespaced with Legacy (to avoid collisions).
       #
@@ -80,8 +69,9 @@ module ActiveMigration
       #
       #   set_active_model Post
       #
-      def set_active_model(active_model)
+      def set_active_model(active_model, mode=:create)
         @active_model = eval(active_model)
+        @active_record_mode = mode
       end
       alias active_model= set_active_model
 
@@ -173,7 +163,7 @@ module ActiveMigration
     def run_normal #:nodoc:
       legacy_records = self.class.legacy_model.find(:all, self.class.legacy_find_options)
       legacy_records.each do |legacy_record|
-        active_record = self.class.active_record_update ? self.class.active_model.find(legacy_record.id) : self.class.active_model.new
+        active_record = (self.class.active_record_mode == :create) ? self.class.active_model.new : self.class.active_model.find(legacy_record.id)
         migrate_record(active_record, legacy_record)
         save_active_record(active_record, legacy_record)
       end

@@ -6,15 +6,10 @@ module ActiveMigration
   #
   #   set_map_primary_key true
   #
-  # To deserialize the keys and map them you first need to load the maps, using the plural form of your migration.
-  # If you had a Product, then you would load :products :
   #
-  #   set_use_maps  :products,
+  # To deserialize the key for a foreign key you can specifiy the keymap as the third element:
   #
-  # To deserialize the key for a foreign key you can:
-  #
-  #   set_mappings  [
-  #                 ['product_id',  'product_id',   :map]
+  #   map [['product_id','product_id',:products]]
   #                 ]
   #
   # If you'd like to access the key from a callback or anywhere outside the mappings array, you can use:
@@ -46,29 +41,21 @@ module ActiveMigration
             @map_primary_key = map_primary_key
           end
           alias map_primary_key= map_primary_key
-
-          # Lets ActiveMigration know what maps to load.
-          #
-          #   set_use_maps  :products
-          #
-          def set_use_maps(*maps)
-            maps.each do |map|
-              @maps_to_load ||= []
-              @maps_to_load << map.to_s
-            end
-          end
         end
       end
     end
 
     def run_with_key_mapping #:nodoc:
-      load_maps if self.class.maps_to_load
       run_without_key_mapping
       write_key_map(self.storage_path, self.class.legacy_model.to_s.demodulize.tableize) if self.class.map_primary_key
     end
 
     def migrate_field_with_key_mapping(active_record, legacy_record, mapping) #:nodoc:
-      eval("legacy_record.#{mapping[0]} = mapped_key(mapping[2], legacy_record.#{mapping[0]})") unless mapping[2].nil?
+      unless mapping[2].nil?
+        load_keymap(mapping[2].to_s)
+        key = mapped_key(mapping[2], legacy_record.instance_eval(mapping[0]))
+        legacy_record.__send__(mapping[0] + '=', key)
+      end
       migrate_field_without_key_mapping(active_record, legacy_record, mapping)
     end
 
@@ -88,11 +75,9 @@ module ActiveMigration
       end
     end
 
-    def load_maps #:nodoc:
+    def load_keymap(map) #:nodoc:
       @maps ||= Hash.new
-      self.class.maps_to_load.each do |map|
-        @maps[map] = YAML.load(File.open(File.join(self.storage_path, map + "_map.yml")))
-      end
+      @maps[map] = YAML.load(File.open(File.join(self.storage_path, map.to_s + "_map.yml"))) if @maps[map].nil?
     end
 
     # Returns the deserialized mapped key when provided with the former key.
@@ -100,6 +85,7 @@ module ActiveMigration
     #  mapped_key(:products, 2)
     #
     def mapped_key(map, key)
+      load_keymap(map.to_s)
       @maps[map.to_s][key]
     end
 

@@ -6,17 +6,10 @@
 
 A library to assist with the migration of data from legacy databases.
 
-== FEATURES/PROBLEMS:
-
-* Supports ActiveRecord
-
-== SYNOPSIS:
-
-  Coming Soon...
-
 == REQUIREMENTS:
 
-* None
+* ActiveSupport
+* ActiveRecord
 
 == INSTALL:
 

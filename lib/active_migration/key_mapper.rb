@@ -75,6 +75,7 @@ module ActiveMigration
       end
     end
 
+    # Lazy loader...
     def load_keymap(map) #:nodoc:
       @maps ||= Hash.new
       @maps[map] = YAML.load(File.open(File.join(self.storage_path, map.to_s + "_map.yml"))) if @maps[map].nil?

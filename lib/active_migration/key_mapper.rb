@@ -4,7 +4,7 @@ module ActiveMigration
   #
   # To serialize the keys you simply:
   #
-  #   set_map_primary_key true
+  #   write_key_map true
   #
   #
   # To deserialize the key for a foreign key you can specifiy the keymap as the third element:
@@ -31,23 +31,23 @@ module ActiveMigration
         alias_method_chain :migrate_field, :key_mapping
         alias_method_chain :save_active_record, :key_mapping
         class << self
-          attr_accessor :map_primary_key, :maps_to_load
+          attr_accessor :map_keys
 
           # Tells ActiveMigration to serialize the primary key of the legacy model.
           #
-          #   set_map_primary_key true
+          #   write_key_map true
           #
-          def set_map_primary_key(map_primary_key)
-            @map_primary_key = map_primary_key
+          def write_key_map(map_keys)
+            @map_keys = map_keys
           end
-          alias map_primary_key= map_primary_key
+          alias map_keys= write_key_map
         end
       end
     end
 
     def run_with_key_mapping #:nodoc:
       run_without_key_mapping
-      write_key_map(self.storage_path, self.class.legacy_model.to_s.demodulize.tableize) if self.class.map_primary_key
+      write_key_map(self.storage_path, self.class.legacy_model.to_s.demodulize.tableize) if self.class.map_keys
     end
 
     def migrate_field_with_key_mapping(active_record, legacy_record, mapping) #:nodoc:
@@ -61,7 +61,7 @@ module ActiveMigration
 
     def save_active_record_with_key_mapping(active_record, legacy_record) #:nodoc:
       save_active_record_without_key_mapping(active_record, legacy_record)
-      map_primary_key(active_record.id, legacy_record.id) if self.class.map_primary_key
+      map_primary_key(active_record.id, legacy_record.id) if self.class.map_keys
     end
 
     def map_primary_key(active_id, legacy_id) #:nodoc:

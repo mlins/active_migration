@@ -6,6 +6,6 @@ class ProductThreeMigration < ActiveMigration::Base
 
   map                 [['name', 'name']]
 
-  set_map_primary_key true
+  write_key_map       true
 
 end

@@ -4,7 +4,7 @@ module ActiveMigration
   class ActiveMigrationError < StandardError
   end
 
-  # There are always at least two datasets involved with ActiveMigration.  Your *Legacy* dataset and you
+  # There are always two datasets involved with ActiveMigration.  Your *Legacy* dataset and you
   # *Active* dataset.  Legacy being the dataset you will be migrationg from.  Active being the dataset you are migrating to.
   #
   # These terms (legacy and active) are used to refer to:
@@ -41,7 +41,7 @@ module ActiveMigration
       #
       # Also, *args can be passed a Hash to hold finder options for legacy record lookup.
       #
-      # Note: If you set :limit, it will stagger your selects with offset.  This is intended to break up large datasets
+      # Note: If you set :limit, it will stagger your selects with an offset. This is intended to break up large datasets
       #       to conserve memory.  Keep in mind, for this functionality to work :offset(because it is needed internally)
       #       can never be specified, it will be deleted.
       #

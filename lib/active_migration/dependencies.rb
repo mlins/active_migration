@@ -6,13 +6,14 @@ module ActiveMigration
   #
   module Dependencies
 
-    def self.included(base)
+    def self.included(base)#:nodoc:
       base.class_eval do
         alias_method_chain :run, :dependencies
         class << self
           attr_accessor :dependencies, :completed
           # Sets the dependencies for the migration
           #
+          #   set_dependencies  [:supplier_migration, :manufacturer_migration]
           def set_dependencies(dependencies)
             @dependencies = dependencies
           end

@@ -142,7 +142,7 @@ module ActiveMigration
     def migrate_record(active_record, legacy_record) #:nodoc:
       self.class.mappings.each do |mapping|
         migrate_field(active_record, legacy_record, mapping)
-      end
+      end unless self.class.mappings.nil?
     end
 
     # FIXME - #migrate_field needs to be refactored.

@@ -132,37 +132,37 @@ module ActiveMigration
 
     def run_normal #:nodoc:
       legacy_records = self.class.legacy_model.find(:all, self.class.legacy_find_options)
-      legacy_records.each do |legacy_record|
-        active_record = (self.class.active_record_mode == :create) ? self.class.active_model.new : self.class.active_model.find(legacy_record.id)
-        migrate_record(active_record, legacy_record)
-        save_active_record(active_record, legacy_record)
+      legacy_records.each do |@legacy_record|
+        @active_record = (self.class.active_record_mode == :create) ? self.class.active_model.new : self.class.active_model.find(@legacy_record.id)
+        migrate_record
+        save_active_record
       end
     end
 
-    def migrate_record(active_record, legacy_record) #:nodoc:
-      self.class.mappings.each do |mapping|
-        migrate_field(active_record, legacy_record, mapping)
+    def migrate_record #:nodoc:
+      self.class.mappings.each do |@mapping|
+        migrate_field
       end unless self.class.mappings.nil?
     end
 
     # FIXME - #migrate_field needs to be refactored.
-    def migrate_field(active_record, legacy_record, mapping) #:nodoc:
+    def migrate_field #:nodoc:
       begin
-        eval("active_record.#{mapping[1]} = legacy_record.#{mapping[0]}")
+        eval("@active_record.#{@mapping[1]} = @legacy_record.#{@mapping[0]}")
       rescue
-        error = "could not be retrieved as #{mapping[0]} from the legacy database -- probably doesn't exist."
-        eval("active_record.#{mapping[1]} = handle_error(active_record, mapping[1], error)")
+        error = "could not be retrieved as #{@mapping[0]} from the legacy database -- probably doesn't exist."
+        eval("@active_record.#{@mapping[1]} = handle_error(@active_record, @mapping[1], error)")
       end
     end
 
-    def save_active_record(active_record, legacy_record) #:nodoc:
-      if active_record.save
-        handle_success(active_record)
+    def save_active_record #:nodoc:
+      if @active_record.save
+        handle_success(@active_record)
       else
-        while !active_record.valid? do
-          handle_errors(active_record)
+        while !@active_record.valid? do
+          handle_errors(@active_record)
         end
-        active_record.save!
+        @active_record.save!
       end
     end
 

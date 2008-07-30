@@ -50,18 +50,18 @@ module ActiveMigration
       write_key_map(self.storage_path, self.class.legacy_model.to_s.demodulize.tableize) if self.class.map_keys
     end
 
-    def migrate_field_with_key_mapping(active_record, legacy_record, mapping) #:nodoc:
-      unless mapping[2].nil?
-        load_keymap(mapping[2].to_s)
-        key = mapped_key(mapping[2], legacy_record.instance_eval(mapping[0]))
-        legacy_record.__send__(mapping[0] + '=', key)
+    def migrate_field_with_key_mapping #:nodoc:
+      unless @mapping[2].nil?
+        load_keymap(@mapping[2].to_s)
+        key = mapped_key(@mapping[2], @legacy_record.instance_eval(@mapping[0]))
+        @legacy_record.__send__(@mapping[0] + '=', key)
       end
-      migrate_field_without_key_mapping(active_record, legacy_record, mapping)
+      migrate_field_without_key_mapping
     end
 
-    def save_active_record_with_key_mapping(active_record, legacy_record) #:nodoc:
-      save_active_record_without_key_mapping(active_record, legacy_record)
-      map_primary_key(active_record.id, legacy_record.id) if self.class.map_keys
+    def save_active_record_with_key_mapping #:nodoc:
+      save_active_record_without_key_mapping
+      map_primary_key(@active_record.id, @legacy_record.id) if self.class.map_keys
     end
 
     def map_primary_key(active_id, legacy_id) #:nodoc:

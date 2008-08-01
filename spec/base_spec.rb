@@ -7,11 +7,15 @@ require File.dirname(__FILE__) + '/fixtures/product_six_migration'
 describe 'A migration' do
 
   before do
+    ActiveMigration::Base.logger = mock('logger', :null_object => true)
     @legacy_record = mock('legacy_model', :id => 1, :name => 'Beer')
-    @active_record = mock('active_model', :name= => 'Beer', :save => true)
+    @active_record = mock('active_model', :id => 1, :name= => 'Beer', :save => true)
+    @active_record.stub!(:new_record?).and_return(true,false)
     Product.stub!(:new).and_return(@active_record)
+    Product.stub!(:table_name).and_return('some_new_table')
     Legacy::Product.stub!(:count).and_return(1)
     Legacy::Product.stub!(:find).and_return([@legacy_record])
+    Legacy::Product.stub!(:table_name).and_return('some_old_table')
   end
 
   it "should find the legacy records" do
@@ -41,7 +45,7 @@ describe 'A migration' do
 
   it "should call #handle_success" do
     @migration = ProductOneMigration.new
-    @migration.should_receive(:handle_success).with(@active_record)
+    @migration.should_receive(:handle_success)
     @migration.run
   end
 
@@ -111,77 +115,14 @@ describe 'A migration' do
       @migration.stub!(:handle_error).and_return("new_value")
     end
 
-    describe "on one field" do
-
-      before do
-        @errors.stub!(:each).and_yield "name", "has an error"
-      end
-
-      it "should attempt to save the active record" do
-        @active_record.should_receive(:save).and_return(false)
-        @migration.run
-      end
-
-      it "should call #handle_error" do
-        @migration.should_receive(:handle_error).with(@active_record, "name", "has an error").and_return("new_value")
-        @migration.run
-      end
-
-      it "should attempt to save the active record again" do
-        @active_record.should_receive(:save!).and_return(true)
-        @migration.run
-      end
-
+    it "should attempt to save the active record" do
+      @active_record.should_receive(:save).and_return(false)
+      @migration.run
     end
 
-    describe "on a has_many association" do
-
-      before do
-        @errors.stub!(:each).and_yield "name", "is invalid"
-        @associated_record = mock("asssociated_model", :errors => @errors, :name => "Miller", :name= => "Miller")
-        @active_record.stub!(:name).and_return([@associated_record, @associated_record])
-      end
-
-      it "should attempt to save the active model" do
-        @active_record.should_receive(:save).and_return(false)
-        @migration.run
-      end
-
-      it "should call #handle_error" do
-        @migration.should_receive(:handle_error).exactly(2).with(@associated_record, "name", "is invalid").and_return("new_value")
-        @migration.run
-      end
-
-      it "should attempt to save the active record again" do
-        @active_record.should_receive(:save!).and_return(true)
-        @migration.run
-      end
-
-    end
-
-    describe "on a belongs_to or has_one association" do
-
-      before do
-        @errors.stub!(:each).and_yield "name", "is invalid"
-        @associated_record = mock("asssociated_model", :kind_of? => ActiveRecord::Base,:errors => @errors, :name => "Miller", :name= => "Miller")
-        @active_record.stub!(:name).and_return(@associated_record)
-      end
-
-      it "should attempt to save the active model" do
-        @active_record.should_receive(:save).and_return(false)
-        @migration.run
-      end
-
-      it "should call #handle_error" do
-        @migration.should_receive(:handle_error).with(@associated_record, "name", "is invalid").and_return("new_value")
-        @migration.run
-      end
-
-      it "should attempt to save the active record again" do
-        @active_record.should_receive(:save!).and_return(true)
-        @migration.run
-      end
-
+    it "should call #handle_error" do
+      @migration.should_receive(:handle_error)
+      @migration.run
     end
 
   end

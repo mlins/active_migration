@@ -73,12 +73,16 @@ module ActiveMigration
       File.open(File.join(data_path, (filename + "_map.yml")), 'w') do |file|
         file.write @key_mappings.to_yaml
       end
+      logger.info("#{self.class.to_s} wrote keymap successfully to #{File.join(data_path, (filename + "_map.yml"))}")
     end
 
     # Lazy loader...
     def load_keymap(map) #:nodoc:
       @maps ||= Hash.new
-      @maps[map] = YAML.load(File.open(File.join(self.storage_path, map.to_s + "_map.yml"))) if @maps[map].nil?
+      if @maps[map].nil?
+        @maps[map] = YAML.load(File.open(File.join(self.storage_path, map.to_s + "_map.yml")))
+        logger.debug("#{self.class.to_s} lazy loaded #{map} successfully.")
+      end
     end
 
     # Returns the deserialized mapped key when provided with the former key.

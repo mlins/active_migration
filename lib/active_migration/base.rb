@@ -32,6 +32,9 @@ module ActiveMigration
   #   end
   #
   class Base
+
+    cattr_accessor :logger
+
     class << self
 
       attr_accessor :legacy_model, :active_model, :mappings, :legacy_find_options, :active_record_mode
@@ -107,6 +110,7 @@ module ActiveMigration
       else
         run_normal
       end
+      logger.info("#{self.class.to_s} migrated all #{@num_of_records} records successfully.")
     end
 
     protected
@@ -141,6 +145,7 @@ module ActiveMigration
         @active_record = (self.class.active_record_mode == :create) ? self.class.active_model.new : self.class.active_model.find(@legacy_record.id)
         migrate_record
         save_active_record
+        logger.debug("#{self.class.to_s} successfully migrated a record from #{self.class.legacy_model.table_name} to #{self.class.active_model.table_name}. The legacy record had an id of #{@legacy_record.id}. The active record has an id of #{@active_record.id}")
       end
     end
 
@@ -155,6 +160,7 @@ module ActiveMigration
       begin
         eval("@active_record.#{@mapping[1]} = @legacy_record.#{@mapping[0]}")
       rescue
+        logger.error("#{self.class.to_s} had an error while trying to migrate #{self.class.legacy_model.table_name}.#{@mapping[0]} to #{self.class.active_model.table_name}.#{@mapping[1]}. The legacy record had an id of #{@legacy_record.id}.")
         handle_error
       end
     end
@@ -165,6 +171,8 @@ module ActiveMigration
           handle_success
         else
           while !@active_record.valid? do
+            errors = @active_record.errors.collect {|field,msg| field + " " + msg}.join(", ")
+            logger.error("#{self.class.to_s} had an error while trying to save the active_record. The associated legacy_record had an id of #{@legacy_record.id}. The active record had the following errors: #{errors}")
             handle_error
           end
         end

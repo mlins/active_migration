@@ -34,11 +34,13 @@ module ActiveMigration
 
     def run_with_dependencies(skip_dependencies=false) #:nodoc:
       if skip_dependencies
+        logger.info("#{self.class.to_s} is skipping dependencies.")
         run_without_dependencies
       else
         self.class.dependencies.each do |dependency|
           migration = dependency.to_s.camelize.constantize
           unless migration.completed?
+            logger.info("#{self.class.to_s} is running #{migration.to_s} as a dependency.")
             migration.new.run
             migration.is_completed
           end

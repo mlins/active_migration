@@ -96,9 +96,14 @@ module ActiveMigration
     #   MyMigration.new.run
     #
     def run
-      num_of_records = self.class.legacy_model.count
-      if self.class.legacy_find_options[:limit] && (num_of_records > self.class.legacy_find_options[:limit])
-        run_in_batches num_of_records
+      count_options = self.class.legacy_find_options.dup
+      count_options.delete(:order)
+      count_options.delete(:group)
+      count_options.delete(:limit)
+      count_options.delete(:offset)
+      @num_of_records = self.class.legacy_model.count(count_options)
+      if self.class.legacy_find_options[:limit] && (@num_of_records > self.class.legacy_find_options[:limit])
+        run_in_batches @num_of_records
       else
         run_normal
       end
@@ -109,13 +114,13 @@ module ActiveMigration
     # This is called everytime there is an error.  You should override this method
     # and handle it in the apporpriate way.
     #
-    def handle_error(record, error_field, error_message)
+    def handle_error()
     end
 
     # This is called everytime there is a successful record migration.  You should override this
     # method and handle it in the appropriate way.
     #
-    def handle_success(record)
+    def handle_success()
     end
 
     private
@@ -150,36 +155,19 @@ module ActiveMigration
       begin
         eval("@active_record.#{@mapping[1]} = @legacy_record.#{@mapping[0]}")
       rescue
-        error = "could not be retrieved as #{@mapping[0]} from the legacy database -- probably doesn't exist."
-        eval("@active_record.#{@mapping[1]} = handle_error(@active_record, @mapping[1], error)")
+        handle_error
       end
     end
 
     def save_active_record #:nodoc:
-      if @active_record.save
-        handle_success(@active_record)
-      else
-        while !@active_record.valid? do
-          handle_errors(@active_record)
-        end
-        @active_record.save!
-      end
-    end
-
-    def handle_errors(record) #:nodoc:
-      record.errors.each do |field, msg|
-        if record.instance_eval(field).kind_of? ActiveRecord::Base
-          handle_errors(record.instance_eval(field))
-          break
-        elsif record.instance_eval(field).kind_of? Array
-          record.instance_eval(field).each do |f|
-            handle_errors(f)
-          end
-          break
+      while @active_record.new_record?
+        if @active_record.save
+          handle_success
         else
-          new_value = handle_error(record, field, msg)
+          while !@active_record.valid? do
+            handle_error
+          end
         end
-        eval("record.#{field} = new_value.chomp")
       end
     end
 

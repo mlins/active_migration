@@ -3,6 +3,7 @@ require File.dirname(__FILE__) + '/spec_helper.rb'
 require File.dirname(__FILE__) + '/fixtures/product_one_migration'
 require File.dirname(__FILE__) + '/fixtures/product_five_migration'
 require File.dirname(__FILE__) + '/fixtures/product_six_migration'
+require File.dirname(__FILE__) + '/fixtures/product_seven_migration'
 
 describe 'A migration' do
 
@@ -54,6 +55,24 @@ describe 'A migration' do
     it "should find the legacy records with the specified parameters" do
       Legacy::Product.should_receive(:find).with(:all, {:conditions => ['name = ?', 'matt'], :include => :manufacturer}).and_return([@legacy_record])
       ProductFiveMigration.new.run
+    end
+
+  end
+
+  describe "with the skip flag set" do
+
+    before do
+      @migration = ProductSevenMigration.new
+    end
+
+    it "should not receive #save" do
+      @migration.should_not_receive(:save)
+      @migration.run
+    end
+
+    it "should receive handle_success" do
+      @migration.should_receive(:handle_success)
+      @migration.run
     end
 
   end

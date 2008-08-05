@@ -144,8 +144,13 @@ module ActiveMigration
       legacy_records.each do |@legacy_record|
         @active_record = (self.class.active_record_mode == :create) ? self.class.active_model.new : self.class.active_model.find(@legacy_record.id)
         migrate_record
-        save_active_record
-        logger.debug("#{self.class.to_s} successfully migrated a record from #{self.class.legacy_model.table_name} to #{self.class.active_model.table_name}. The legacy record had an id of #{@legacy_record.id}. The active record has an id of #{@active_record.id}")
+        unless @skip
+          save_active_record
+          logger.debug("#{self.class.to_s} successfully migrated a record from #{self.class.legacy_model.table_name} to #{self.class.active_model.table_name}. The legacy record had an id of #{@legacy_record.id}. The active record has an id of #{@active_record.id}")
+        else
+          handle_success
+        end
+        @skip = false
       end
     end
 

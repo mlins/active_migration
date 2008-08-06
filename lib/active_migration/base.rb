@@ -146,7 +146,11 @@ module ActiveMigration
         migrate_record
         unless @skip
           save_active_record
-          logger.debug("#{self.class.to_s} successfully migrated a record from #{self.class.legacy_model.table_name} to #{self.class.active_model.table_name}. The legacy record had an id of #{@legacy_record.id}. The active record has an id of #{@active_record.id}")
+          unless @skip
+            logger.debug("#{self.class.to_s} successfully migrated a record from #{self.class.legacy_model.table_name} to #{self.class.active_model.table_name}. The legacy record had an id of #{@legacy_record.id}. The active record has an id of #{@active_record.id}")
+          else
+            handle_success
+          end
         else
           handle_success
         end
@@ -171,11 +175,11 @@ module ActiveMigration
     end
 
     def save_active_record #:nodoc:
-      while @active_record.new_record?
+      while @active_record.new_record? && !@skip
         if @active_record.save
           handle_success
         else
-          while !@active_record.valid? do
+          while !@active_record.valid? && !@skip do
             errors = @active_record.errors.collect {|field,msg| field + " " + msg}.join(", ")
             logger.error("#{self.class.to_s} had an error while trying to save the active_record. The associated legacy_record had an id of #{@legacy_record.id}. The active record had the following errors: #{errors}")
             handle_error

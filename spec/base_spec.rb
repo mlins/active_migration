@@ -4,6 +4,7 @@ require File.dirname(__FILE__) + '/fixtures/product_one_migration'
 require File.dirname(__FILE__) + '/fixtures/product_five_migration'
 require File.dirname(__FILE__) + '/fixtures/product_six_migration'
 require File.dirname(__FILE__) + '/fixtures/product_seven_migration'
+require File.dirname(__FILE__) + '/fixtures/product_eight_migration'
 
 describe 'A migration' do
 
@@ -59,18 +60,41 @@ describe 'A migration' do
 
   end
 
-  describe "with the skip flag set" do
+  describe "with the skip flag set before #migrate_field" do
 
     before do
       @migration = ProductSevenMigration.new
+      @active_record.stub!(:valid?).and_return(false)
+      @active_record.stub!(:errors).and_return([])
     end
 
     it "should not receive #save" do
-      @migration.should_not_receive(:save)
+      @active_record.should_not_receive(:save)
       @migration.run
     end
 
-    it "should receive handle_success" do
+    it "should receive #handle_success" do
+      @migration.should_receive(:handle_success)
+      @migration.run
+    end
+
+  end
+
+  describe "with the skip flag set in #handle_error" do
+
+    before do
+      @migration = ProductEightMigration.new
+      @active_record.stub!(:save).and_return(false)
+      @active_record.stub!(:valid?).and_return(false)
+      @active_record.stub!(:errors).and_return([])
+    end
+
+    it "should only call save once and then skip the migration" do
+      @active_record.should_receive(:save).once.and_return(false)
+      @migration.run
+    end
+
+    it "should receive #handle_success" do
       @migration.should_receive(:handle_success)
       @migration.run
     end

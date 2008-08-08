@@ -29,7 +29,7 @@ module ActiveMigration
       base.class_eval do
         alias_method_chain :run, :key_mapping
         alias_method_chain :migrate_field, :key_mapping
-        alias_method_chain :save_active_record, :key_mapping
+        alias_method_chain :save, :key_mapping
         class << self
           attr_accessor :map_keys
 
@@ -59,8 +59,8 @@ module ActiveMigration
       migrate_field_without_key_mapping
     end
 
-    def save_active_record_with_key_mapping #:nodoc:
-      save_active_record_without_key_mapping
+    def save_with_key_mapping #:nodoc:
+      save_without_key_mapping
       map_primary_key(@active_record.id, @legacy_record.id) if self.class.map_keys
     end
 

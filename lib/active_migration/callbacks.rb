@@ -10,9 +10,9 @@ module ActiveMigration
   #   - before_migrate_field
   #   - *migrate_field*
   #   - after_migrate_field
-  #   - before_save_active_record
-  #   - *save_active_record*
-  #   - after_save_active_record
+  #   - before_save
+  #   - *save*
+  #   - after_save
   #   - after_run
   #
   module Callbacks
@@ -20,10 +20,10 @@ module ActiveMigration
     CALLBACKS = %w(before_run after_run
     before_migrate_record after_migrate_record
     before_migrate_field after_migrate_field
-    before_save_active_record after_save_active_record)
+    before_save after_save)
 
     def self.included(base)
-      [:run, :migrate_record, :migrate_field, :save_active_record].each do |method|
+      [:run, :migrate_record, :migrate_field, :save].each do |method|
         base.send :alias_method_chain, method, :callbacks
       end
       base.send :include, ActiveSupport::Callbacks
@@ -68,14 +68,14 @@ module ActiveMigration
 
     # This is called directly before the active record is saved.
     #
-    def before_save_active_record() end
+    def before_save() end
     # This is called directly after the active record is saved.
     #
-    def after_save_active_record() end
-    def save_active_record_with_callbacks
-      callback(:before_save_active_record)
-      save_active_record_without_callbacks
-      callback(:after_save_active_record)
+    def after_save() end
+    def save_with_callbacks
+      callback(:before_save)
+      save_without_callbacks
+      callback(:after_save)
     end
 
     private

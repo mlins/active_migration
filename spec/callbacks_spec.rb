@@ -42,6 +42,16 @@ describe "A migration" do
     @migration.run
   end
 
+  it "should call #before_save" do
+    @migration.should_receive(:before_save).once
+    @migration.run
+  end
+
+  it "should call #after_save" do
+    @migration.should_receive(:after_save).once
+    @migration.run
+  end
+
   it "should call #after_run" do
     @migration.should_receive(:after_run).once
     @migration.run

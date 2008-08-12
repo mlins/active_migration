@@ -9,7 +9,7 @@ describe "A migration" do
     ActiveMigration::Base.logger = mock('logger', :null_object => true)
     @legacy_record = mock('legacy_model', :id => 1, :name => 'Beer')
     @active_record = mock('active_model', :id => 10, :name= => 'Beer', :save => true)
-    @active_record.stub!(:new_record?).and_return(true,false)
+    @active_record.stub!(:changed?).and_return(true,false)
     Product.stub!(:new).and_return(@active_record)
     Product.stub!(:table_name).and_return('some_new_table')
     Legacy::Product.stub!(:count).and_return(1)
@@ -42,7 +42,7 @@ describe "A migration" do
   before do
     @legacy_record = mock('legacy_model', :id => 1, :supplier_id => 1, :supplier_id= => 10)
     @active_record = mock('active_model', :id => 10, :supplier_id= => 10, :save => true)
-    @active_record.stub!(:new_record?).and_return(true,false)
+    @active_record.stub!(:changed?).and_return(true,false)
     Product.stub!(:new).and_return(@active_record)
     Product.stub!(:table_name).and_return('some_new_table')
     Legacy::Product.stub!(:count).and_return(1)
@@ -50,6 +50,7 @@ describe "A migration" do
     Legacy::Product.stub!(:table_name).and_return('some_old_table')
     @file = mock("file", :null_object => true)
     File.stub!(:open).and_return(@file)
+    File.stub!(:file?).and_return(true)
     @yaml = {1 => 10}
     YAML.stub!(:load).and_return(@yaml)
   end

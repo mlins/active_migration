@@ -12,7 +12,7 @@ describe 'A migration' do
     ActiveMigration::Base.logger = mock('logger', :null_object => true)
     @legacy_record = mock('legacy_model', :id => 1, :name => 'Beer')
     @active_record = mock('active_model', :id => 1, :name= => 'Beer', :save => true)
-    @active_record.stub!(:new_record?).and_return(true,false)
+    @active_record.stub!(:changed?).and_return(true,false)
     Product.stub!(:new).and_return(@active_record)
     Product.stub!(:table_name).and_return('some_new_table')
     Legacy::Product.stub!(:count).and_return(1)

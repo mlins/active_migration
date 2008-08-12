@@ -142,7 +142,7 @@ module ActiveMigration
     def run_normal #:nodoc:
       legacy_records = self.class.legacy_model.find(:all, self.class.legacy_find_options)
       legacy_records.each do |@legacy_record|
-        @active_record = (self.class.active_record_mode == :create) ? self.class.active_model.new : self.class.active_model.find(@legacy_record.id)
+        find_or_create_active_record
         migrate_record
         unless @skip
           save
@@ -156,6 +156,10 @@ module ActiveMigration
         end
         @skip = false
       end
+    end
+
+    def find_or_create_active_record
+      @active_record = (self.class.active_record_mode == :create) ? self.class.active_model.new : self.class.active_model.find(@legacy_record.id)
     end
 
     def migrate_record #:nodoc:
@@ -175,7 +179,7 @@ module ActiveMigration
     end
 
     def save #:nodoc:
-      while @active_record.new_record? && !@skip
+      while @active_record.changed? && !@skip
         if @active_record.save
           handle_success
         else

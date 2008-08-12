@@ -180,7 +180,7 @@ module ActiveMigration
 
     def save #:nodoc:
       while @active_record.changed? && !@skip
-        if @active_record.save
+        if @active_record.save(validate_record?)
           handle_success
         else
           while !@active_record.valid? && !@skip do
@@ -190,6 +190,11 @@ module ActiveMigration
           end
         end
       end
+      @validate_record = true
+    end
+
+    def validate_record?
+      @validate_record.nil? ? true : @validate_record
     end
 
   end

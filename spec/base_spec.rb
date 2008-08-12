@@ -5,6 +5,7 @@ require File.dirname(__FILE__) + '/fixtures/product_five_migration'
 require File.dirname(__FILE__) + '/fixtures/product_six_migration'
 require File.dirname(__FILE__) + '/fixtures/product_seven_migration'
 require File.dirname(__FILE__) + '/fixtures/product_eight_migration'
+require File.dirname(__FILE__) + '/fixtures/product_nine_migration'
 
 describe 'A migration' do
 
@@ -70,6 +71,26 @@ describe 'A migration' do
 
     it "should not receive #save" do
       @active_record.should_not_receive(:save)
+      @migration.run
+    end
+
+    it "should receive #handle_success" do
+      @migration.should_receive(:handle_success)
+      @migration.run
+    end
+
+  end
+
+  describe "with the validation flag set to false" do
+
+    before do
+      @migration = ProductNineMigration.new
+      @active_record.stub!(:valid?).and_return(false)
+      @active_record.stub!(:errors).and_return([])
+    end
+
+    it "should recieve #save with false" do
+      @active_record.should_receive(:save).with(false).and_return(true)
       @migration.run
     end
 

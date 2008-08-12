@@ -47,7 +47,7 @@ module ActiveMigration
 
     def run_with_key_mapping #:nodoc:
       run_without_key_mapping
-      write_key_map(self.storage_path, self.class.legacy_model.to_s.demodulize.tableize) if self.class.map_keys
+      serialize_key_map(self.storage_path, self.class.legacy_model.to_s.demodulize.tableize) if self.class.map_keys
     end
 
     def migrate_field_with_key_mapping #:nodoc:
@@ -69,7 +69,7 @@ module ActiveMigration
       @key_mappings[legacy_id] = active_id
     end
 
-    def write_key_map(data_path, filename) #:nodoc:
+    def serialize_key_map(data_path, filename) #:nodoc:
       File.open(File.join(data_path, (filename + "_map.yml")), 'w') do |file|
         file.write @key_mappings.to_yaml
       end

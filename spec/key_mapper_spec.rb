@@ -25,7 +25,7 @@ describe "A migration" do
 
   it "should allow the key maps storage path to be changed" do
     ActiveMigration::KeyMapper.storage_path = "/foo"
-    File.should_receive(:open).with(File.join('/foo', 'products_map.yml'), 'w').and_yield(@file)
+    File.should_receive(:open).with(File.join('/foo', 'product_three_migration_map.yml'), 'w').and_yield(@file)
     ProductThreeMigration.new.run
     ActiveMigration::KeyMapper.storage_path = "/tmp"
   end

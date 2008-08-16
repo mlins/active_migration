@@ -144,10 +144,16 @@ module ActiveMigration
       legacy_records.each do |@legacy_record|
         find_or_create_active_record
         migrate_record
-        unless @skip
+        unless skip?
           save
-          unless @skip
-            logger.debug("#{self.class.to_s} successfully migrated a record from #{self.class.legacy_model.table_name} to #{self.class.active_model.table_name}. The legacy record had an id of #{@legacy_record.id}. The active record has an id of #{@active_record.id}")
+          unless skip?
+            unless @active_record.is_a?(Array)
+              logger.debug("#{self.class.to_s} successfully migrated a record from #{self.class.legacy_model.table_name} to #{self.class.active_model.table_name}. The legacy record had an id of #{@legacy_record.id}. The active record has an id of #{@active_record.id}")
+            else
+              @active_record.each do |record|
+                logger.debug("#{self.class.to_s} successfully migrated a record from #{self.class.legacy_model.table_name} to #{self.class.active_model.table_name}. The legacy record had an id of #{@legacy_record.id}. The active record has an id of #{record.id}")
+              end
+            end
           else
             handle_success
           end
@@ -179,22 +185,40 @@ module ActiveMigration
     end
 
     def save #:nodoc:
-      while @active_record.changed? && !@skip
-        if @active_record.save(validate_record?)
-          handle_success
-        else
-          while !@active_record.valid? && !@skip do
-            errors = @active_record.errors.collect {|field,msg| field + " " + msg}.join(", ")
-            logger.error("#{self.class.to_s} had an error while trying to save the active_record. The associated legacy_record had an id of #{@legacy_record.id}. The active record had the following errors: #{errors}")
-            handle_error
-          end
+      unless @active_record.is_a?(Array)
+        save_and_resolve(@active_record)
+      else
+        @active_record.each do |record|
+          save_and_resolve(record)
         end
       end
       @validate_record = true
     end
 
+    def save_and_resolve(record)
+      while record.changed? && !skip?
+        if record.save(validate_record?)
+          handle_success
+        else
+          while !record.valid? && !skip? do
+            errors = record.errors.collect {|field,msg| field + " " + msg}.join(", ")
+            logger.error("#{self.class.to_s} had an error while trying to save the active_record. The associated legacy_record had an id of #{@legacy_record.id}. The active record had the following errors: #{errors}")
+            handle_error
+          end
+        end
+      end
+    end
+
     def validate_record?
       @validate_record.nil? ? true : @validate_record
+    end
+
+    def skip
+      @skip = true
+    end
+
+    def skip?
+      @skip.nil? ? false : @skip
     end
 
   end

@@ -191,4 +191,33 @@ describe 'A migration' do
 
   end
 
+  describe "with @active_record set as an Array" do
+
+    before do
+      @record1 = mock('active_model1', :id => 1, :name= => 'Beer', :save => true)
+      @record2 = mock('active_model2', :id => 2, :name= => 'Beer', :save => true)
+      @record1.stub!(:changed?).and_return(true,false)
+      @record2.stub!(:changed?).and_return(true,false)
+      @active_record = [@record1, @record2]
+      Product.stub!(:new).and_return(@active_record)
+    end
+
+    it "should call save on record1" do
+      @record1.should_receive(:save).and_return(true)
+      ProductOneMigration.new.run
+    end
+
+    it "should call save on record2" do
+      @record2.should_receive(:save).and_return(true)
+      ProductOneMigration.new.run
+    end
+
+    it "should receive handle_success for each record" do
+      @migration = ProductOneMigration.new
+      @migration.should_receive(:handle_success).twice
+      @migration.run
+    end
+
+  end
+
 end

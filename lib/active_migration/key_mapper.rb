@@ -47,7 +47,7 @@ module ActiveMigration
 
     def run_with_key_mapping #:nodoc:
       run_without_key_mapping
-      serialize_key_map(self.storage_path, self.class.legacy_model.to_s.demodulize.tableize) if self.class.map_keys
+      serialize_key_map(self.storage_path, self.class.to_s.demodulize.underscore) if self.class.map_keys
     end
 
     def migrate_field_with_key_mapping #:nodoc:
@@ -65,7 +65,7 @@ module ActiveMigration
     end
 
     def map_primary_key(active_id, legacy_id) #:nodoc:
-      map_name = self.class.legacy_model.to_s.demodulize.tableize
+      map_name = self.class.to_s.demodulize.underscore
       load_keymap(map_name)
       @maps[map_name] ||= {}
       @maps[map_name][legacy_id] = active_id
@@ -73,7 +73,7 @@ module ActiveMigration
 
     def serialize_key_map(data_path, filename) #:nodoc:
       load_keymap(filename)
-      map_name = self.class.legacy_model.to_s.demodulize.tableize
+      map_name = self.class.to_s.demodulize.underscore
       FileUtils.mkdir_p(data_path)
       FileUtils.rm_rf(File.join(data_path, (filename + "_map.yml")))
       File.open(File.join(data_path, (filename + "_map.yml")), 'w') do |file|

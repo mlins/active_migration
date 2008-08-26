@@ -99,6 +99,7 @@ module ActiveMigration
     #   MyMigration.new.run
     #
     def run
+      logger.info("#{self.class.to_s} is starting.")
       count_options = self.class.legacy_find_options.dup
       count_options.delete(:order)
       count_options.delete(:group)
@@ -154,8 +155,6 @@ module ActiveMigration
                 logger.debug("#{self.class.to_s} successfully migrated a record from #{self.class.legacy_model.table_name} to #{self.class.active_model.table_name}. The legacy record had an id of #{@legacy_record.id}. The active record has an id of #{record.id}")
               end
             end
-          else
-            handle_success
           end
         else
           handle_success
@@ -164,7 +163,7 @@ module ActiveMigration
       end
     end
 
-    def find_or_create_active_record
+    def find_or_create_active_record #:nodoc:
       @active_record = (self.class.active_record_mode == :create) ? self.class.active_model.new : self.class.active_model.find(@legacy_record.id)
     end
 
@@ -185,17 +184,36 @@ module ActiveMigration
     end
 
     def save #:nodoc:
+      if self.class.active_record_mode == :create
+        create
+      else
+        update
+      end
+    end
+
+    def create #:nodoc:
+      process_records
+    end
+
+    def update #:nodoc:
+      process_records
+    end
+
+    def process_records #:nodoc:
+      return if skip?
       unless @active_record.is_a?(Array)
         save_and_resolve(@active_record)
       else
         @active_record.each do |record|
           save_and_resolve(record)
+          handle_success if skip?
+          @skip = false
         end
       end
       @validate_record = true
     end
 
-    def save_and_resolve(record)
+    def save_and_resolve(record) #:nodoc:
       while record.changed? && !skip?
         if record.save(validate_record?)
           handle_success
@@ -205,19 +223,20 @@ module ActiveMigration
             logger.error("#{self.class.to_s} had an error while trying to save the active_record. The associated legacy_record had an id of #{@legacy_record.id}. The active record had the following errors: #{errors}")
             handle_error
           end
+          handle_success
         end
       end
     end
 
-    def validate_record?
+    def validate_record? #:nodoc:
       @validate_record.nil? ? true : @validate_record
     end
 
-    def skip
+    def skip #:nodoc:
       @skip = true
     end
 
-    def skip?
+    def skip? #:nodoc:
       @skip.nil? ? false : @skip
     end
 

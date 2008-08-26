@@ -20,10 +20,11 @@ module ActiveMigration
     CALLBACKS = %w(before_run after_run
     before_migrate_record after_migrate_record
     before_migrate_field after_migrate_field
-    before_save after_save)
+    before_save after_save before_create after_create
+    before_update after_update)
 
     def self.included(base)
-      [:run, :migrate_record, :migrate_field, :save].each do |method|
+      [:run, :migrate_record, :migrate_field, :save, :update, :create].each do |method|
         base.send :alias_method_chain, method, :callbacks
       end
       base.send :include, ActiveSupport::Callbacks
@@ -76,6 +77,30 @@ module ActiveMigration
       callback(:before_save)
       save_without_callbacks
       callback(:after_save)
+    end
+
+    # This is only called before update if active_record_mode is set to :update.
+    #
+    def before_update() end
+    # This is only called after update if active_record_mode is set to :update.
+    #
+    def after_update() end
+    def update_with_callbacks
+      callback(:before_update)
+      update_without_callbacks
+      callback(:after_update)
+    end
+
+    # This is only called before create if active_record_mode is set to :create(default).
+    #
+    def before_create() end
+    # This is only called after update if active_record_mode is set to :create(default).
+    #
+    def after_create() end
+    def create_with_callbacks
+      callback(:before_create)
+      create_without_callbacks
+      callback(:after_create)
     end
 
     private

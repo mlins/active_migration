@@ -9,7 +9,7 @@ module ActiveMigration
   #
   # To deserialize the key for a foreign key you can specifiy the keymap as the third element:
   #
-  #   map [['product_id','product_id',:products]]
+  #   map [['product_id','product_id', :product_migration]]
   #                 ]
   #
   # If you'd like to access the key from a callback or anywhere outside the mappings array, you can use:

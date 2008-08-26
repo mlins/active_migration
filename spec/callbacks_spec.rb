@@ -1,6 +1,7 @@
 require File.dirname(__FILE__) + '/spec_helper.rb'
 
 require File.dirname(__FILE__) + '/fixtures/product_one_migration'
+require File.dirname(__FILE__) + '/fixtures/product_ten_migration'
 
 describe "A migration" do
 
@@ -17,44 +18,35 @@ describe "A migration" do
     @migration = ProductOneMigration.new
   end
 
-  it "should call #before_run" do
-    @migration.should_receive(:before_run).once
-    @migration.run
+  describe "when active_record_mode is set to :create" do
+
+    create_callbacks = ActiveMigration::Callbacks::CALLBACKS - %w(before_update after_update)
+
+    create_callbacks.each do |callback|
+      it "should call ##{callback}" do
+        @migration.should_receive(callback).once
+        @migration.run
+      end
+    end
+
   end
 
-  it "should call #before_migrate_record" do
-    @migration.should_receive(:before_migrate_record).once
-    @migration.run
-  end
+  describe "when active_record_mode is set to :update" do
 
-  it "should call #before_migrate_field" do
-    @migration.should_receive(:before_migrate_field).once
-    @migration.run
-  end
+    before do
+      @migration = ProductTenMigration.new
+      Product.stub!(:find).and_return(@active_record)
+    end
 
-  it "should call #after_migrate_field" do
-    @migration.should_receive(:after_migrate_field).once
-    @migration.run
-  end
+    update_callbacks = ActiveMigration::Callbacks::CALLBACKS - %w(before_create after_create)
 
-  it "should call #after_migrate_record" do
-    @migration.should_receive(:after_migrate_record).once
-    @migration.run
-  end
+    update_callbacks.each do |callback|
+      it "should call ##{callback}" do
+        @migration.should_receive(callback).once
+        @migration.run
+      end
+    end
 
-  it "should call #before_save" do
-    @migration.should_receive(:before_save).once
-    @migration.run
-  end
-
-  it "should call #after_save" do
-    @migration.should_receive(:after_save).once
-    @migration.run
-  end
-
-  it "should call #after_run" do
-    @migration.should_receive(:after_run).once
-    @migration.run
   end
 
 end

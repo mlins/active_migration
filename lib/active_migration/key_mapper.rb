@@ -54,9 +54,11 @@ module ActiveMigration
       unless @mapping[2].nil?
         load_keymap(@mapping[2].to_s)
         key = mapped_key(@mapping[2], @legacy_record.instance_eval(@mapping[0]))
+        old_value = @legacy_record.__send__(@mapping[0])
         @legacy_record.__send__(@mapping[0] + '=', key)
       end
       migrate_field_without_key_mapping
+      @legacy_record.__send__(@mapping[0] + '=', old_value) unless old_value.nil?
     end
 
     def save_with_key_mapping #:nodoc:

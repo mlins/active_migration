@@ -65,8 +65,13 @@ describe "A migration" do
     ProductFourMigration.new.run
   end
 
-  it "should set the legacy_model to the new key before the field is migrated" do
+  it "should set the legacy_model to the new value before the field is migrated" do
     @legacy_record.should_receive(:supplier_id=).with(10).and_return(10)
+    ProductFourMigration.new.run
+  end
+
+  it "should set the legacy_model to the old value after the field is migrated" do
+    @legacy_record.should_receive(:supplier_id=).with(1).and_return(1)
     ProductFourMigration.new.run
   end
 

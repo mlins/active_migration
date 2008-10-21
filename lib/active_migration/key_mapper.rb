@@ -70,7 +70,7 @@ module ActiveMigration
       map_name = self.class.to_s.demodulize.underscore
       load_keymap(map_name)
       @maps[map_name] ||= {}
-      @maps[map_name][legacy_id] = active_id
+      @maps[map_name][handle_composite(legacy_id)] = handle_composite(active_id)
     end
 
     def serialize_key_map(data_path, filename) #:nodoc:
@@ -99,7 +99,16 @@ module ActiveMigration
     #
     def mapped_key(map, key)
       load_keymap(map.to_s)
-      @maps[map.to_s][key]
+      @maps[map.to_s][handle_composite(key)]
+    end
+
+    # Handles composite primary keys.  This assumes you're using the composite_primary_keys gem by Dr. Nic.
+    #
+    # If id is an array join them with '_' otherwise just return the id.
+    #
+    def handle_composite(id)
+      return id.join('_') if id.is_a?(Array)
+      id
     end
 
   end

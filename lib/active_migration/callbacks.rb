@@ -10,9 +10,9 @@ module ActiveMigration
   #   - before_migrate_field
   #   - *migrate_field*
   #   - after_migrate_field
-  #   - before_save
+  #   - before_save (before_create, before_update)
   #   - *save*
-  #   - after_save
+  #   - after_save (after_create, after_update)
   #   - after_run
   #
   module Callbacks

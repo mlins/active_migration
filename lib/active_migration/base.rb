@@ -4,17 +4,7 @@ module ActiveMigration
   class ActiveMigrationError < StandardError
   end
 
-  # There are always two datasets involved with ActiveMigration.  Your *Legacy* dataset and you
-  # *Active* dataset.  Legacy being the dataset you will be migrationg from.  Active being the dataset you are migrating to.
-  #
-  # These terms (legacy and active) are used to refer to:
-  #
-  #   - databases
-  #   - models
-  #   - records
-  #   - fields
-  #
-  # ActiveMigration::Base is subclassed by your *Migration*.  It defines a DSL similar to ActiveRecord, in which it feel more
+  # ActiveMigration::Base is subclassed by your migration.  It defines a DSL similar to ActiveRecord, in which it feel more
   # like a configuration.
   #
   # == Typical Usage:
@@ -25,9 +15,9 @@ module ActiveMigration
   #
   #     set_legacy_model 'Legacy::Post'
   #
-  #     map              [[:name_tx,        :name],
-  #                       [:description_tx, :description],
-  #                       [:date,           :created_at]]
+  #     map              [['name_tx',        'name'       ],
+  #                       ['description_tx', 'description'],
+  #                       ['date',           'created_at' ]]
   #
   #   end
   #
@@ -44,9 +34,9 @@ module ActiveMigration
       #
       # Also, *args can be passed a Hash to hold finder options for legacy record lookup.
       #
-      # Note: If you set :limit, it will stagger your selects with an offset. This is intended to break up large datasets
-      #       to conserve memory.  Keep in mind, for this functionality to work :offset(because it is needed internally)
-      #       can never be specified, it will be deleted.
+      # *Note:* If you set :limit, it will stagger your selects with an offset. This is intended to break up large datasets
+      # to conserve memory.  Keep in mind, for this functionality to work :offset(because it is needed internally)
+      # can never be specified, it will be deleted.
       #
       #   set_legacy_model Legacy::Post
       #
@@ -126,6 +116,13 @@ module ActiveMigration
     # method and handle it in the appropriate way.
     #
     def handle_success()
+    end
+
+    # This method can be called at any point in the in the migration lifecycle (usually within callbacks)
+    # to stop the current record migration and continue on to the next.
+    #
+    def skip
+      @skip = true
     end
 
     private
@@ -230,10 +227,6 @@ module ActiveMigration
 
     def validate_record? #:nodoc:
       @validate_record.nil? ? true : @validate_record
-    end
-
-    def skip #:nodoc:
-      @skip = true
     end
 
     def skip? #:nodoc:

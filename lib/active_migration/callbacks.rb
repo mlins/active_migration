@@ -23,7 +23,7 @@ module ActiveMigration
     before_save after_save before_create after_create
     before_update after_update)
 
-    def self.included(base)
+    def self.included(base)#:nodoc:
       [:run, :migrate_record, :migrate_field, :save, :update, :create].each do |method|
         base.send :alias_method_chain, method, :callbacks
       end

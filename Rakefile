@@ -10,6 +10,7 @@ end
 
 Rake::RDocTask.new do |t|
   t.rdoc_dir = 'doc'
+  t.rdoc_files.include('README')
   t.rdoc_files.include('lib/**/*.rb')
   t.options << '--inline-source'
   t.options << '--all'
@@ -26,6 +27,7 @@ begin
     s.description = "A library to assist with the migration of data from legacy databases."
     s.authors = ["Matt Lins"]
     s.add_dependency 'active_support', '>= 2.2.2'
+    s.add_dependency 'active_record', '>= 2.2.2'
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"

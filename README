@@ -1,21 +1,142 @@
-= active_migration
+= ActiveMigration
 
-* http://github.com/mlins/active_migration/
+Github[http://github.com/mlins/active_migration/]
 
-== DESCRIPTION:
+ActiveMigration is a library to assist with the migration of data from legacy databases.  This library was not designed for speed
+so much as it was designed to maintain data integrity.  By default ActiveMigration runs all data through your ActiveRecord validators
+and callbacks.  It can be extended to run faster with the ar-extenstions library if speed is more important than data integrity.
+ActiveMigration was written by: Matt Lins.
 
-A library to assist with the migration of data from legacy databases.
+You'll probably want to use ActiveMigration with the Godwit[http://github.com/mlins/godwit] framework for migrating databases.
 
-== REQUIREMENTS:
+== Installation
 
-* ActiveSupport
-* ActiveRecord
+  $ gem sources -a http://gems.github.com
 
-== INSTALL:
+  $ sudo gem install mlins-active_migration
 
-* sudo gem install active_migration
+== Terms
 
-== LICENSE:
+I use a couple of terms throughout the codebase and documentation that could be confusing.  I use the term *legacy* to refer to
+the old data that you'll be migrating from.  I use the term *active* to refer the new data that you'll be migrating to.  This
+can be confusing because ActiveMigration makes use of ActiveRecord.  You'll see *active* and *legacy* used to refer to:
+
+- databases
+- models
+- records
+- fields
+
+Other terms used:
+
+- *PK* - Primary Key
+- *FK* - Foreign Key
+
+== Usage
+
+Once you have written your migration, you can run it like this:
+
+  MyMigration.new.run
+
+ActiveMigration::Base is intended to be subclassed and defines a simple DSL similar to ActiveRecord.  ActiveMigration assumes you have an
+ActiveRecord class defined for both the legacy model and the active model.  Godwit namespaces legacy models with the Legacy module.
+You can then map fields with a muli-dimensional array.  Each element of the array represents one field mapping.  Within the element
+array the first element is the legacy field and the second element is the active field.
+
+A simple example:
+
+  class PostMigration < ActiveMigration::Base
+
+    set_active_model 'Post'
+
+    set_legacy_model 'Legacy::Post'
+
+    map              [['old_field_name', 'new_field_name']]
+
+  end
+
+ActiveMigration::Callbacks provides callback support via the ActiveSupport library.  You can use callbacks exactly as you would in
+your ActiveRecord models.  This example below also illustrates accessing the record instance variables.  You can access both the legacy and
+active records at anytime during the migration lifcycle via: @active_record and @legacy_record.
+
+A callbacks example:
+
+  class PostMigration < ActiveMigration::Base
+
+    set_active_model 'Post'
+
+    set_legacy_model 'Legacy::Post'
+
+    map              [['title_tx',  'title'     ],
+                      ['writer_id', 'author_id']]
+
+    before_save     :upcase_name
+
+    def upcase_name
+      @active_record.name.upcase
+    end
+
+  end
+
+ActiveMigration::Dependencies provides a dependency tree for your migrations.  If you have dependencies set, they'll be ran first.
+
+A dependencies example:
+
+  class PostMigration < ActiveMigration::Base
+
+    set_active_model 'Post'
+
+    set_legacy_model 'Legacy::Post'
+
+    map              [['title_tx',  'title'     ],
+                      ['writer_id', 'author_id']]
+
+    set_dependencies [:author_migration]
+
+  end
+
+ActiveMigration::KeyMapper provides a system to persist legacy PK/FK relationships.  It's possible to migrate your PK's and FK's through
+ActiveMigration.  However, sometimes that's not possible or desirable.  The keymapper allows you to serialize the PK of the legacy record
+mapped to the new PK of the active record.  You can then recall that mapping (usually with a legacy FK) later in other migrations to maintain
+relationships.
+
+First you need to serialize the PK of a model.  Let's say your Manufacturer model has_may Products.
+
+  class AuthorMigration < ActiveMigration::Base
+
+    set_active_model 'Author'
+
+    set_legacy_model 'Legacy::Writer'
+
+    map              [['name_tx',   'name'    ],
+                      ['handle_tx', 'nickname']]
+
+    write_key_map    true
+
+  end
+
+Later, in your PostMigration you may need to recall the legacy Author PK to maintain the relationship, that can be done like so:
+
+  class PostMigration < ActiveMigration::Base
+
+    set_active_model 'Post'
+
+    set_legacy_model 'Legacy::Post'
+
+    map              [['title_tx',  'title'                       ],
+                      ['writer_id', 'author_id', :author_migration]]
+
+    set_dependencies [:author_migration]
+
+  end
+
+This will lookup the PK of the legacy author by the 'writer_id' and return the new PK assigned to the model when it was saved.
+
+== Requirements
+
+- ActiveSupport
+- ActiveRecord
+
+== License
 
 (The MIT License)
 

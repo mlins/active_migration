@@ -50,6 +50,8 @@ module ActiveMigration
       serialize_key_map(self.storage_path, self.class.to_s.demodulize.underscore) if self.class.map_keys
     end
 
+    private
+
     def migrate_field_with_key_mapping #:nodoc:
       unless @mapping[2].nil?
         load_keymap(@mapping[2].to_s)

@@ -1,3 +1,8 @@
+*1.0.1 (November 22, 2008)*
+
+* Renamed gem to activemigration
+* Fixed dependencies
+
 *1.0.0 (November 22, 2008)*
 
 * Initial Release

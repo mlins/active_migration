@@ -20,14 +20,14 @@ end
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |s|
-    s.name = "active_migration"
+    s.name = "activemigration"
     s.summary = "A library to assist with the migration of data from legacy databases."
     s.email = "mattlins@gmail.com"
     s.homepage = "http://github.com/mlins/active_migration"
     s.description = "A library to assist with the migration of data from legacy databases."
     s.authors = ["Matt Lins"]
-    s.add_dependency 'active_support', '>= 2.2.2'
-    s.add_dependency 'active_record', '>= 2.2.2'
+    s.add_dependency 'activesupport', '>= 2.2.2'
+    s.add_dependency 'activerecord', '>= 2.2.2'
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"

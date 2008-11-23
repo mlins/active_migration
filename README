@@ -16,7 +16,7 @@ databases.
 
   $ gem sources -a http://gems.github.com
 
-  $ sudo gem install mlins-active_migration
+  $ sudo gem install mlins-activemigration
 
 == Terms
 

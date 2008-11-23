@@ -1,3 +1,7 @@
+*1.0.3 (November 22, 2008)*
+
+* Fixed gemspec problems
+
 *1.0.2 (November 22, 2008)*
 
 * Renamed gem back to active_migration

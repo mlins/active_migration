@@ -20,7 +20,7 @@ end
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |s|
-    s.name = "activemigration"
+    s.name = "active_migration"
     s.summary = "A library to assist with the migration of data from legacy databases."
     s.email = "mattlins@gmail.com"
     s.homepage = "http://github.com/mlins/active_migration"

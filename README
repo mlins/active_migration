@@ -133,8 +133,6 @@ done like so:
     map              [['title_tx',  'title'                       ],
                       ['writer_id', 'author_id', :author_migration]]
 
-    set_dependencies [:author_migration]
-
   end
 
 This will lookup the PK of the legacy author by the 'writer_id' and return the new PK assigned to the model when it

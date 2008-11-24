@@ -27,8 +27,8 @@ begin
     s.description = "A library to assist with the migration of data from legacy databases."
     s.authors = ["Matt Lins"]
     s.files = FileList["[A-Z]*", "{lib,spec}/**/*"]
-    s.add_dependency 'activesupport', '>= 2.2.2'
-    s.add_dependency 'activerecord', '>= 2.2.2'
+    s.add_dependency 'activesupport', '>= 2.1.0'
+    s.add_dependency 'activerecord', '>= 2.1.0'
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
